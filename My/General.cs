@@ -354,6 +354,62 @@ namespace My
                 return memory;
             }
         }
-               
+
+        public static class Sorting
+        {
+            #region merge_sort
+            public static IEnumerable<T> merge_sort<T>(IEnumerable<T> source) where T:IComparable
+            {
+                int count = source.Count();
+                if (count <= 1)
+                    return source;
+
+                int half = count / 2;
+                var left = source.Take(half);
+                var right = source.Skip(half);
+
+                left = merge_sort(left);
+                right = merge_sort(right);
+
+                return merge_parts(left, right);
+            }
+            static IEnumerable<T> merge_parts<T>(IEnumerable<T> left, IEnumerable<T> right) where T:IComparable
+            {
+                List<T> list_left = left.ToList(), list_right = right.ToList();      
+                int total_count = list_left.Count() + list_right.Count();
+
+                var result = new T[total_count];
+
+                int left_indexer = 0;
+                int right_indexer = 0;
+                int result_indexer = 0;
+
+                while (left_indexer < list_left.Count && right_indexer < list_right.Count)
+                {
+                    if (list_left[left_indexer].CompareTo(list_right[right_indexer]) <= 0)
+                    {
+                        result[result_indexer] = list_left[left_indexer];
+                        result_indexer++; left_indexer++;
+                    }
+                    else
+                    {
+                        result[result_indexer] = list_right[right_indexer];
+                        result_indexer++; right_indexer++;
+                    }
+                }
+                while (left_indexer < list_left.Count)
+                {
+                    result[result_indexer] = list_left[left_indexer];
+                    result_indexer++; left_indexer++;
+                }
+                while (right_indexer < list_right.Count)
+                {
+                    result[result_indexer] = list_right[right_indexer];
+                    result_indexer++; right_indexer++;
+                }
+                return result;
+            }
+            #endregion
+        }
     }
 }
