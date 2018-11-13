@@ -14,6 +14,7 @@ using System.Runtime.InteropServices;
 using System.Net;
 using System.Text.RegularExpressions;
 
+
 namespace My
 {
     public partial class ThreadSeeker : UserControl
@@ -31,7 +32,7 @@ namespace My
             public ThreadSeekerColorisationSetting(string PartOfProgram, string ProbablyContainedString, Color ColorToBeShown)
             {
                 if (colorToBeShown == Color.Purple)
-                    throw new Exception("Нельзя использовать этот цвет для ThreadSeeker");
+                    throw new Exception("Нельзя использовать Color.Purple для ThreadSeeker");
                 partOfProgram = PartOfProgram;
                 probablyContainedString = ProbablyContainedString;
                 colorToBeShown = ColorToBeShown;
@@ -188,7 +189,7 @@ namespace My
                     end = new DateTime(int.Parse(etexts[0]), int.Parse(etexts[1]), int.Parse(etexts[2]), 0, 0, 0);
                     bondsActive = true;
                 }
-                catch (Exception e) { }
+                catch { }
                 #endregion
                 string logsPath = Directory.GetCurrentDirectory() + "\\logs";
                 string[] years = Directory.GetDirectories(logsPath);
@@ -249,7 +250,7 @@ namespace My
                     }
                     catch { }
             }
-            catch(Exception e)
+            catch
             { }
 
             return res.ToArray();
@@ -306,7 +307,7 @@ namespace My
                 string impostring = "";
                 if (is_system_message) impostring = "[system]";
                 if (is_important) impostring += "[important]";
-                string date = GeneralFunctions.DateAndTime.convertDateTimeToString(dateTime);
+                string date = DateAndTime.convertDateTimeToString(dateTime);
                 while (date.Length < "2018.07.14: 18.23.24_".Length) date = date + "_";
                 string prog_part = "[" + part + "]";
                 prog_part = "[" + part.Replace("__", "_") + "]";
@@ -325,7 +326,7 @@ namespace My
                 {
                     string[] splits = s.Replace("\r\n", "").Split(new[] { "мб" }, StringSplitOptions.RemoveEmptyEntries);
                     string[] left_parts = splits[0].Split(new[] { "_", "%" }, StringSplitOptions.RemoveEmptyEntries);
-                    DateTime dt = GeneralFunctions.DateAndTime.convertStringToDateTime(left_parts[0]);
+                    DateTime dt = DateAndTime.convertStringToDateTime(left_parts[0]);
                     //for some reason the correct value from func is nor assigned to valueable
                     int cpu = Convert.ToInt32(left_parts[1]);
                     long mem = Convert.ToInt64(left_parts[2]);
@@ -395,14 +396,14 @@ namespace My
                 string path = create_folder_and_get_path();
                 #region getDiagnostics = memory and cpu
                 Process p = Process.GetCurrentProcess();                
-                float fcpu = GeneralFunctions.Diagnostics.get_cpu_percent_usage(p);
-                long memory = GeneralFunctions.Diagnostics.get_memory_mb_usage(p);
+                float fcpu = Diagnostics.get_cpu_percent_usage(p);
+                long memory = Diagnostics.get_memory_mb_usage(p);
                 foreach (var v in additional_processes_to_consider)
                     try
                     {
-                        int addfCPU = GeneralFunctions.Diagnostics.get_cpu_percent_usage(v);
+                        int addfCPU = Diagnostics.get_cpu_percent_usage(v);
                         fcpu += addfCPU;
-                        long addMemory = GeneralFunctions.Diagnostics.get_memory_mb_usage(v);
+                        long addMemory = Diagnostics.get_memory_mb_usage(v);
                         memory += addMemory;
                     }
                     catch { }
@@ -422,7 +423,7 @@ namespace My
                 if (!system)
                     somethingChanged = true;
             }
-            catch (Exception e)
+            catch
             {
 
             }
@@ -509,8 +510,8 @@ namespace My
                     #region get threads for selected dates
                     try
                     {
-                        DateTime mindt = GeneralFunctions.DateAndTime.convertStringToDateTime(Stb.Text, false);
-                        DateTime maxdt = GeneralFunctions.DateAndTime.convertStringToDateTime(POtb.Text, false);
+                        DateTime mindt = DateAndTime.convertStringToDateTime(Stb.Text, false);
+                        DateTime maxdt = DateAndTime.convertStringToDateTime(POtb.Text, false);
                         for (int i = threads.Count - 1; i >= 0; i--)
                             try
                             {
@@ -580,8 +581,10 @@ namespace My
                             try
                             {
                                 string[] parts = res[a].Split(new[] { "]" }, StringSplitOptions.None);
-                                if (res[a].Contains(v.partOfProgram)
-                                    && parts[1].Contains(v.probablyContainedString))
+                                string p0 = parts[0] + "]";
+                                string p1 = res[a].Replace(p0, "");
+                                if (p0.Contains(v.partOfProgram)
+                                    && p1.Contains(v.probablyContainedString))
                                     elem.ForeColor = v.colorToBeShown;
                             }
                             catch { }
@@ -593,7 +596,7 @@ namespace My
                     sleep();
                     #endregion
                 }
-                catch (Exception e)
+                catch
                 { }
         }
         bool checking(Unit unit, string[] requests, string[] antirequests)
@@ -604,8 +607,8 @@ namespace My
                 return false;
             try
             {
-                DateTime since = GeneralFunctions.DateAndTime.convertStringToDateTime(Stb.Text, false);
-                DateTime to = GeneralFunctions.DateAndTime.convertStringToDateTime(POtb.Text, false);
+                DateTime since = DateAndTime.convertStringToDateTime(Stb.Text, false);
+                DateTime to = DateAndTime.convertStringToDateTime(POtb.Text, false);
                 if (unit.dateTime < since || unit.dateTime > to)
                     return false;
             }
@@ -648,14 +651,14 @@ namespace My
                     textBox3.Text = currentActivity;
                     if (showSleepingInfo && sleptTime.TotalSeconds >= 1)
                     {
-                        string sleepstring = "(сон " + GeneralFunctions.DateAndTime.convertTimeSpanToString(sleptTime) + ")";
+                        string sleepstring = "(сон " + DateAndTime.convertTimeSpanToString(sleptTime) + ")";
                         if (textBox3.Text.Contains("(сон"))
                             textBox3.Text = textBox3.Text.Remove(textBox3.Text.IndexOf("(сон"));
                         textBox3.Text += sleepstring;
                     }
                     if (launchIfIdle)
                     {
-                        var idle = GeneralFunctions.Diagnostics.getIdleTime();
+                        var idle = Diagnostics.getIdleTime();
                         if (idle > new TimeSpan(1, 30, 0))
                             pause = false;
                     }
@@ -832,8 +835,8 @@ namespace My
             var today = DateTime.Today;
             var weekago = today - new TimeSpan(7, 0, 0, 0);
             var weeklater = today + new TimeSpan(7, 0, 0, 0);
-            string sago = GeneralFunctions.DateAndTime.convertDateTimeToString(weekago, false);
-            string slater = GeneralFunctions.DateAndTime.convertDateTimeToString(weeklater, false);
+            string sago = DateAndTime.convertDateTimeToString(weekago, false);
+            string slater = DateAndTime.convertDateTimeToString(weeklater, false);
             Stb.Text = sago;
             POtb.Text = slater;
         }
