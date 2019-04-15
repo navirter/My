@@ -106,6 +106,42 @@ namespace My.Testing
 
         #endregion
 
+        #region firsting
+
+        [TestMethod()]
+        public void getFirstDigitsTesting_Empty()
+        {
+            try
+            {
+                string input = "";
+                int output = input.getFirstDigits();
+                Assert.Fail();
+            }
+            catch (NullReferenceException e)
+            {
+                Assert.Fail(e.Message);
+            }
+            catch
+            {
+                Assert.IsNull(null);
+            }
+        }
+        [TestMethod()]
+        public void getFirstDigitsTesting_digitsLettersPunctuation()
+        {
+            try
+            {
+                string input = "123abc!()456";
+                int output = input.getFirstDigits();
+                int expected = 123;
+                Assert.AreEqual(expected, output);
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+        }
+        #endregion
         #endregion
     }
 }

@@ -17,10 +17,10 @@ using System.Text.RegularExpressions;
 
 namespace My
 {
-    public partial class ThreadSeeker : UserControl
+    public partial class ThreadSeeker : UserControl, IDisposable
     {
-        
-        #region initialisation
+
+        #region (un)initialisation
         /// <summary>
         /// part of program may be empty
         /// </summary>
@@ -44,7 +44,7 @@ namespace My
             public int x;
             public int y;
             public int width = 0;
-            public int height =0;
+            public int height = 0;
             public AnchorStyles anchors;
             public Graphics(int X, int Y, int Width, int Height, AnchorStyles anchors)
             {
@@ -71,15 +71,17 @@ namespace My
         /// <param name="colorisationSettings"> may contain 0 elements or be null</param>
         /// <param name="ReshowDelaySec">how many seconds between reshows</param>
         public ThreadSeeker(ThreadSeekerColorisationSetting[] colorisationSettings, int ReshowDelaySec
-            , int dangerMemoryLoadMB, Graphics graphics, Form Owner, bool ShowSleepingInfo, bool LaunchIfIdle)
+            , int dangerMemoryLoadMB, Graphics graphics, Form Owner,
+            bool ShowSleepingInfo = false, bool LaunchIfIdle = false, bool pressRecalibrationAtStart = false)
         {
-            initialise(colorisationSettings, ReshowDelaySec, dangerMemoryLoadMB, graphics, Owner, ShowSleepingInfo, LaunchIfIdle);
+            initialise(colorisationSettings, ReshowDelaySec, dangerMemoryLoadMB, graphics, Owner, ShowSleepingInfo, LaunchIfIdle, pressRecalibrationAtStart);
         }
         public ThreadSeeker()
         {
         }
         public void initialise(ThreadSeekerColorisationSetting[] colorisationSettings, int ReshowDelaySec
-            , int dangerMemoryLoadMB, Graphics graphics, Form Owner, bool ShowSleepingInfo, bool LaunchIfIdle)
+            , int dangerMemoryLoadMB, Graphics graphics, Form Owner,
+            bool ShowSleepingInfo = false, bool LaunchIfIdle = false, bool pressRecalibrationAtStart = false)
         {
             CheckForIllegalCrossThreadCalls = false;
             #region launch and initialisations
@@ -90,6 +92,8 @@ namespace My
             this.Anchor = graphics.anchors;
             InitializeComponent();
             this.Show();
+            if (pressRecalibrationAtStart)
+                button5.PerformClick();
             if (colorisationSettings != null)
                 threadSeekerColorisationSettings = colorisationSettings.ToList();
             //howMuch = Howmuch;
@@ -145,6 +149,7 @@ namespace My
             if (!closedCorrectly) MessageBox.Show("Программа не была закрыта корректно");
             #endregion
             initialised = true;
+            #region manage threads
             try { thread_renew_data.Abort(); } catch { }
             thread_renew_data = new Thread(renewData);
             thread_renew_data.Name = "ThreadSeeker";
@@ -153,19 +158,26 @@ namespace My
             thread_renew_sleep = new Thread(renewSleep);
             thread_renew_sleep.Name = "SleepSeeker";
             thread_renew_sleep.Start();
+            #endregion
             pause_button = button4;
-            addThread("Логгер запущен", "ThreadSeeker.start", true, false, true);
+            string part = "ThreadSeeker.start";
+            addMessage(part, "__________________________________________________", true);
+            addMessage(part, "Логгер запущен", true, false, true);
         }
         /// <summary>
         /// must be used to stop cycles
         /// </summary>
         public void close()
         {
-            addThread("Логгер закрыт", "ThreadSeeker.closing", true, false, false);            
+            addMessage("ThreadSeeker.closing", "Логгер закрыт", true, false, false);
             closing = true;
             try { thread_renew_data.Abort(); } catch { }
             try { thread_renew_sleep.Abort(); } catch { }
             Dispose(true);
+        }
+        ~ThreadSeeker()
+        {
+            close();
         }
 
 
@@ -192,29 +204,28 @@ namespace My
                 catch { }
                 #endregion
                 string logsPath = Directory.GetCurrentDirectory() + "\\logs";
-                string[] years = Directory.GetDirectories(logsPath);
-                foreach (var y in years)
-                {
-                    int year = int.Parse(new DirectoryInfo(y).Name);
-                    string[] months = Directory.GetDirectories(y);
-                    foreach (var m in months)
+                string[] files = Directory.GetFiles(logsPath, "*", SearchOption.AllDirectories);
+                foreach (var file in files)
+                    try
                     {
-                        int month = int.Parse(new DirectoryInfo(m).Name);
-                        string[] days = Directory.GetFiles(m);
-                        foreach (var d in days)
+                        if (bondsActive)
                         {
-                            int day = int.Parse(new FileInfo(d).Name.Replace(".txt", ""));
-                            if (bondsActive)
-                            {
-                                DateTime fileDate = new DateTime(year, month, day);
-                                if (fileDate >= start && fileDate <= end)
-                                    res.Add(d);
-                            }
-                            else
-                                res.Add(d);
+                            string[] parts = file.Split(new[] { "\\" }, StringSplitOptions.RemoveEmptyEntries);
+                            int last = parts.Length - 1;
+                            int day = parts[last].getFirstDigits();
+                            int month = parts[last - 1].getFirstDigits();
+                            int year = parts[last - 2].getFirstDigits();
+                            DateTime fileDate = new DateTime(year, month, day);
+                            if (fileDate >= start && fileDate <= end)
+                                res.Add(file);
                         }
+                        else
+                            res.Add(file);
                     }
-                }
+                    catch (Exception e)
+                    {
+                        addMessage(file + ": " + e.Message, "ThreadSeeker", true, true, false);
+                    }
             }
             catch { }
             return res.ToArray();
@@ -347,10 +358,10 @@ namespace My
             }
         }
 
-        bool detailedInfo = false;
-        bool importantOnly = false;
-        int reshowDelay = 15;
-        bool closing = false;
+        static bool showDetailedInfo = false;
+        static bool showImportantOnly = false;
+        static int reshowDelay = 15;
+        static bool closing = false;
 
         Thread thread_renew_data;
         Thread thread_renew_sleep;
@@ -364,19 +375,36 @@ namespace My
         #endregion
 
         #region public static funcs
+
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="programPart">must be separated with dots</param>
-        /// <param name="important"></param>
-        /// <param name="system"></param>
-        /// <param name="isCurrentActivity"></param>
-        public static void addThreadAsync(string message, string programPart, bool important = false, bool system = false, bool isCurrentActivity = true)
+        /// Class containing complete addMessage functions for different cases. CurrentActivity & system = true and errors important
+        /// </summary>        
+        public static class AddMessage
         {
-            voidstringstringbool vssb = addThread;
-            vssb.BeginInvoke(message, programPart, important, system, isCurrentActivity, null, null);
+            public static void Done(string particularPart)
+            {
+                ThreadSeeker.addMessage("done", particularPart, false, true);
+            }
+            public static void Fail(string particularPart, string failMessage = "")
+            {
+                ThreadSeeker.addMessage("fail. " + failMessage, particularPart, true, true);
+            }
+            public static void Start(string particularPart)
+            {
+                ThreadSeeker.addMessage("start", particularPart, false, true);
+            }
+            public static void NotNeeded(string particularPart)
+            {
+                ThreadSeeker.addMessage("not needed", particularPart, false, true);
+            }
         }
+
+        [Obsolete("Use addMessage")]
+        static public void addThread(string message, string programPart, bool important = false, bool system = false, bool isCurrentActivity = true)
+        {
+            addMessage(programPart, message, important, system, isCurrentActivity);
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -385,15 +413,12 @@ namespace My
         /// <param name="important"></param>
         /// <param name="system"></param>
         /// <param name="isCurrentActivity"></param>
-        static public void addThread(string message, string programPart, bool important = false, bool system = false, bool isCurrentActivity = true)
+        static public void addMessage(string programPart, string message, bool important = false, bool system = false, bool isCurrentActivity = true)
         {
             try
             {
                 if (isCurrentActivity)
                     currentActivity = programPart + "." + message;
-                if (Thread.CurrentThread.Name == null)
-                    Thread.CurrentThread.Name = "addThread";
-                string path = create_folder_and_get_path();
                 #region getDiagnostics = memory and cpu
                 Process p = Process.GetCurrentProcess();                
                 float fcpu = Diagnostics.get_cpu_percent_usage(p);
@@ -412,15 +437,10 @@ namespace My
                 DateTime now = DateTime.Now;
                 Unit unit = new Unit(now, cpu, memory, important, system, programPart.Replace("__", "_"), message.Replace("[", "").Replace("]", ""));
                 string message_to_write = "{MES}" + unit.ToString();
-                File.AppendAllLines(path, new[] { message_to_write }, Encoding.GetEncoding(1251));
-                //My.GeneralFunctions.IO.WriteToXmlFile(path, unit, true);
+
+                appendLineToFile(message_to_write);
                 find_and_add_thread_to_right_date_list(unit);
-                //if (important)
-                //{
-                //    System.Media.SystemSounds.Exclamation.Play();
-                //    somethingChanged = true;
-                //}
-                if (!system)
+                if (!system || (system && showDetailedInfo))
                     somethingChanged = true;
             }
             catch
@@ -461,6 +481,12 @@ namespace My
         {
             if (!File.Exists(Directory.GetCurrentDirectory() + "\\temp\\lookAtLog.txt"))
                 File.Create(Directory.GetCurrentDirectory() + "\\temp\\lookAtLog.txt");
+        }
+
+        static void appendLineToFile(string message)
+        {
+            string path = create_folder_and_get_path();
+            File.AppendAllLines(path, new[] { message }, Encoding.GetEncoding(1251));
         }
 
         #region processses
@@ -561,12 +587,6 @@ namespace My
                     for (int a = 0; a < res.Count; a++)
                     {
                         if (somethingChanged || closing) break;
-                        //int ind = res[a].IndexOf("]");
-                        //while (ind < 22)
-                        //{
-                        //    ind++;
-                        //    res[a] = res[a].Insert(ind, "_");
-                        //}
                         try { listView1.Items.Add(res[a]); } catch { continue; }
                         #region colorise
                         var elem = listView1.Items[listView1.Items.Count - 1];
@@ -581,10 +601,10 @@ namespace My
                             try
                             {
                                 string[] parts = res[a].Split(new[] { "]" }, StringSplitOptions.None);
-                                string p0 = parts[0] + "]";
-                                string p1 = res[a].Replace(p0, "");
-                                if (p0.Contains(v.partOfProgram)
-                                    && p1.Contains(v.probablyContainedString))
+                                string p0 = parts[0].ToLower() + "]";
+                                string p1 = res[a].Replace(p0, "").ToLower();
+                                if (p0.Contains(v.partOfProgram.ToLower())
+                                    && p1.Contains(v.probablyContainedString.ToLower()))
                                     elem.ForeColor = v.colorToBeShown;
                             }
                             catch { }
@@ -602,9 +622,9 @@ namespace My
         }
         bool checking(Unit unit, string[] requests, string[] antirequests)
         {
-            if (!detailedInfo && unit.is_system_message)
+            if (!showDetailedInfo && unit.is_system_message)
                 return false;
-            if (importantOnly && !unit.is_important)
+            if (showImportantOnly && !unit.is_important)
                 return false;
             try
             {
@@ -679,10 +699,51 @@ namespace My
         }
 
         #endregion
-
-
-        #region events      
         
+        #region events      
+
+        private void groupBox1_Enter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            showImportantOnly = checkBox1.Checked;
+            somethingChanged = true;
+        }
+
+        private void save_settings(object sender, EventArgs e)
+        {
+            try
+            {
+                somethingChanged = true;
+                string path = Directory.GetCurrentDirectory() + "\\ThreadSeeker.txt";
+                string from = Stb.Text;
+                string to = POtb.Text;
+                File.WriteAllLines(path, new[] { from, to }, Encoding.GetEncoding(1251));
+            }
+            catch { }
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            recalibrateTimeFrame();
+            somethingChanged = true;
+        }
+        public void recalibrateTimeFrame()
+        {
+            var spreadTime = new TimeSpan(3, 0, 0, 0);
+
+            var today = DateTime.Today;
+            var weekago = today - spreadTime;
+            var weeklater = today + spreadTime;
+            string sago = DateAndTime.convertDateTimeToString(weekago, false);
+            string slater = DateAndTime.convertDateTimeToString(weeklater, false);
+            Stb.Text = sago;
+            POtb.Text = slater;
+        }
+
         private void button1_Click(object sender, EventArgs e)
         {
             try
@@ -732,7 +793,7 @@ namespace My
 
         private void button3_Click(object sender, EventArgs e)
         {
-            addThread(textBox1.Text, "ThreadSeeker.manually", true, false, false);
+            addMessage(textBox1.Text, "ThreadSeeker.manually", true, false, false);
             _somethingChanged(sender, e);
         }
         
@@ -774,7 +835,7 @@ namespace My
 
         private void checkBox3_CheckedChanged(object sender, EventArgs e)
         {
-            detailedInfo = checkBox3.Checked;
+            showDetailedInfo = checkBox3.Checked;
             somethingChanged = true;
         }
 
@@ -807,39 +868,5 @@ namespace My
 
         #endregion
 
-        private void groupBox1_Enter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
-            importantOnly = checkBox1.Checked;
-            somethingChanged = true;
-        }
-
-        private void save_settings(object sender, EventArgs e)
-        {
-            try
-            {
-                somethingChanged = true;
-                string path = Directory.GetCurrentDirectory() + "\\ThreadSeeker.txt";
-                string from = Stb.Text;
-                string to = POtb.Text;
-                File.WriteAllLines(path, new[] { from, to }, Encoding.GetEncoding(1251));
-            }
-            catch { }
-        }
-
-        private void button5_Click(object sender, EventArgs e)
-        {
-            var today = DateTime.Today;
-            var weekago = today - new TimeSpan(7, 0, 0, 0);
-            var weeklater = today + new TimeSpan(7, 0, 0, 0);
-            string sago = DateAndTime.convertDateTimeToString(weekago, false);
-            string slater = DateAndTime.convertDateTimeToString(weeklater, false);
-            Stb.Text = sago;
-            POtb.Text = slater;
-        }
     }
 }

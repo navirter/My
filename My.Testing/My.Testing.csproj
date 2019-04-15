@@ -47,6 +47,9 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.XML" />
     <Reference Include="WebDriver, Version=3.141.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\selenium\net40\WebDriver.dll</HintPath>
@@ -67,6 +70,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="CopierTesting.cs" />
     <Compile Include="ExtensionsTesting.cs" />
     <Compile Include="IEqualable.cs" />
     <Compile Include="IOTesting.cs" />

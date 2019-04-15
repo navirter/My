@@ -36,6 +36,7 @@
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.button3 = new System.Windows.Forms.Button();
             this.textBox2 = new System.Windows.Forms.TextBox();
+            this.button5 = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.button4 = new System.Windows.Forms.Button();
             this.textBox3 = new System.Windows.Forms.TextBox();
@@ -47,7 +48,6 @@
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
-            this.button5 = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -116,7 +116,7 @@
             this.button3.Size = new System.Drawing.Size(32, 23);
             this.button3.TabIndex = 6;
             this.button3.Text = "+";
-            this.toolTip1.SetToolTip(this.button3, "Добавить сообщение из плюсика\r\nсохранится с пометкой [manually]");
+            this.toolTip1.SetToolTip(this.button3, "Добавить сообщение из плюсика\r\nсохранится с пометкой ThreadSeeker.manually");
             this.button3.UseVisualStyleBackColor = true;
             this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
@@ -132,6 +132,18 @@
         "нить неизвестные знаки звездочкой\r\nПример:  под \"к*ка\" попадают \"кОШка\", \"кИШка\"" +
         " и \"кУКУШка\"");
             this.textBox2.TextChanged += new System.EventHandler(this._somethingChanged);
+            // 
+            // button5
+            // 
+            this.button5.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.25F);
+            this.button5.Location = new System.Drawing.Point(209, 13);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(27, 40);
+            this.button5.TabIndex = 16;
+            this.button5.Text = "()";
+            this.toolTip1.SetToolTip(this.button5, "Показать записи только за последнюю неделю и следующую");
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
             // groupBox1
             // 
@@ -270,18 +282,6 @@
             this.checkBox1.Text = "только важные";
             this.checkBox1.UseVisualStyleBackColor = true;
             this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
-            // 
-            // button5
-            // 
-            this.button5.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.25F);
-            this.button5.Location = new System.Drawing.Point(209, 13);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(27, 40);
-            this.button5.TabIndex = 16;
-            this.button5.Text = "()";
-            this.toolTip1.SetToolTip(this.button5, "Показать записи только за последнюю неделю и следующую");
-            this.button5.UseVisualStyleBackColor = true;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
             // ThreadSeeker
             // 

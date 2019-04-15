@@ -24,6 +24,11 @@ namespace My
         {
             return new string(source.ToCharArray().Where(s => !Char.IsDigit(s)).ToArray());
         }
+        public static int ExtractDigits(this string source)
+        {
+            string str = new string(source.Where(s => Char.IsDigit(s)).ToArray());
+            return int.Parse(str);
+        }
 
         public static string RemoveLetters(this string source)
         {
@@ -57,7 +62,21 @@ namespace My
 
         #endregion
 
+        #region firsting
+
+        public static int getFirstDigits(this string str)
+        {
+            if (str == null)
+                throw new NullReferenceException("how can a string be null?");
+            var digits = str.TakeWhile(q => Char.IsDigit(q)).ToList();
+            string concat = String.Concat(digits);
+            int res = int.Parse(concat);
+            return res;
+        }
         #endregion
+
+        #endregion
+        
 
         #region IEnumerable<string>
 
