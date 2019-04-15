@@ -22,40 +22,48 @@ namespace My
 {
     public static class Web
     {       
-        public static Image downloadImageFromURL(string url, out int flagsCount)
-        {
-            flagsCount = -1;
-            using (WebClient webClient = new WebClient())
-            {
-                byte[] data = webClient.DownloadData(url);
-
-                using (MemoryStream mem = new MemoryStream(data))
-                {
-                    using (var yourImage = Image.FromStream(mem))
-                    {
-                        flagsCount = yourImage.Flags;
-                        return yourImage;
-                    }
-                }
-            }
-        }
-        
+        #region chromeDriver management
         /// <summary>
         /// last created chromeDriver
         /// </summary>
-        public static ChromeDriver chromeDriver;
-        public static List<ChromeDriver> chromeDrivers = new List<ChromeDriver>();
-        public static List<string> chromeDriversIds = new List<string>();
+        public static ChromeDriverHelper chromeDriverHelper { get; private set; }
+        public static List<ChromeDriverHelper> ChromeDriverHelpers { get; private set; }
+
+        public class ChromeDriverHelper
+        {
+            public ChromeDriver ChromeDriver { get; set; }
+            public List<string> AttachedProcessesIds { get; set; }
+        }
+
+        static List<string> lastCreatedDriverIds = new List<string>();//filled at chromedriver initialization
+        /// <summary>
+        /// All attached processes of all helpers
+        /// </summary>
+        static List<string> chromeDriversIds
+        {
+            get
+            {
+                List<string> res = new List<string>();
+                ChromeDriverHelpers.ForEach(s => res.AddRange(s.AttachedProcessesIds));
+                return res;
+            }
+        }
+
+        static string[] _processesToCheck = {   
+        "chrome",
+        "chromedriver",
+        "conhost"};
 
         /// <summary>
         /// Returns a new chromedriver instance with given parameters, and saves its information.\n
-        /// Each set_up must be followed by dispose or disposeAll
+        /// Each set_up must be followed by dispose or disposeAll.
+        /// It's possible that some other chrome tabs(even in normal browsers) created during execution of this function are closed at later disposal
         /// </summary>
         /// <param name="visible">False if chrome must run silently</param>
         /// <param name="ignoreSetificateErrors"></param>
         /// <param name="windowsUserName">Leave it empty not to use a consistant chrome profile</param>
         /// <returns></returns>
-        public static ChromeDriver chromedriver_set_up(bool visible = true, bool ignoreSetificateErrors = true
+        public static ChromeDriverHelper chromedriver_set_up(bool visible = true, bool ignoreSetificateErrors = true
             , string windowsUserName = "")
         {
             try
@@ -106,79 +114,73 @@ namespace My
                 #endregion
                 //options.AddArgument("--window-position=-32000,-32000");
                 #endregion
+                //get chrome related processes before initialization
+                var chromeRelatedIds = Process.GetProcesses()
+                    .Where(s => _processesToCheck.FirstOrDefault(x => s.ProcessName.ToLower().Contains(x)) != null);
+                //initialize chromedriver
                 ChromeDriver chrome = new ChromeDriver(service, options);                                
-                Thread.Sleep(2000);
-
-                #region set My.Web features for keeping more info about all Chromedrivers
-                chromeDrivers.Add(chrome);
-                chromeDriversIds.Add(service.ProcessId.ToString());                
-
-                List<string> towrite = new List<string>();
-                for (int i = 0; i < chromeDriversIds.Count; i++)
-                {
-                    towrite.Add(chromeDriversIds[i]);
-                }
-                File.AppendAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", towrite);
-                #endregion
-
-                return chrome;
+                //get chrome related processes after initialization
+                var latestChromeRelatedIds = Process.GetProcesses()
+                    .Where(s => _processesToCheck.FirstOrDefault(x => s.ProcessName.ToLower().Contains(x)) != null);
+                //save newly created processes' ids to list
+                lastCreatedDriverIds = latestChromeRelatedIds.Except(chromeRelatedIds).Select(s => s.Id.ToString()).ToList();
+                //save new helper to list
+                var lastHelper = new ChromeDriverHelper() { ChromeDriver = chrome, AttachedProcessesIds = lastCreatedDriverIds };
+                ChromeDriverHelpers.Add(lastHelper);
+                chromeDriverHelper = lastHelper;
+                //save newly created processees' ids to a file
+                File.AppendAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", lastCreatedDriverIds);
+                return lastHelper;
             }
             catch(Exception e)
             {
                 throw new Exception(e.Message + "\nОтсутствует файл chromedriver.exe?");
             }
         }
-
-        public static void chromedriver_dispose(ChromeDriver chrome, int process_id)
+        public static void chromedriver_dispose(ChromeDriverHelper helper)
         {
+            string ids = string.Join(", ", helper.AttachedProcessesIds);
             try
             {
-                chromeDrivers.Remove(chrome);
-                chromeDriversIds.RemoveAll(s => s == process_id.ToString());
-                chrome.Quit();
-                chrome = null;
-                var chromeProc = Process.GetProcessById(process_id);
-                killProc(chromeProc);
+                helper.ChromeDriver.Quit();
+                helper.AttachedProcessesIds.ForEach(s =>
+                {
+                    var proc = Process.GetProcessById(int.Parse(s));
+                    killProc(proc);
+                });
+                helper.AttachedProcessesIds = new List<string>();
+                File.WriteAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", chromeDriversIds);
+                ChromeDriverHelpers.Remove(helper);
+                helper = null;
+                chromeDriverHelper = ChromeDriverHelpers.LastOrDefault();
             }
             catch (Exception e)
             {
-                throw new Exception(process_id + ": " + e.Message);
-            }
-            try
-            {
-                List<string> towrite = new List<string>();
-                chromeDriversIds.ForEach(s => towrite.Add(s));
-                File.WriteAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", towrite);
-            }
-            catch (Exception e)
-            {
-                throw new Exception(process_id + ": " + e.Message);
+                throw new Exception("ids(" + ids + "): " + e.Message);
             }
         }
         public static void chromedriver_disposeAll()
         {
+            
             string path = Directory.GetCurrentDirectory() + "\\drivers.txt";
             try
             {
                 string[] lines = File.ReadAllLines(path);
                 for (int i = 0; i < lines.Length; i++)
-                {
-                    Process p = Process.GetProcessById(int.Parse(lines[i])); 
-                    chromedriver_dispose(h.chromedriver, lines[i].ExtractDigits());
-                }
-            }
-            catch { }
-            try
-            {
-                var processList = Process.GetProcessesByName("chromedriver");
-                foreach (var process in processList)
-                {
-                    killProc(process);
-                }
+                    try
+                    {
+                        Process p = Process.GetProcessById(int.Parse(lines[i]));
+                        killProc(p);
+                    }
+                    catch(Exception e)
+                    { throw new Exception("Can't kill process:" + lines[i] + "\n" + e.Message); }
+                chromeDriverHelper = null;
+                ChromeDriverHelpers = new List<ChromeDriverHelper>();
+                File.WriteAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", chromeDriversIds);
             }
             catch { }
         }
-        static void killProc(Process process, int timeOutMilliseconds = 10000)
+        static void killProc(Process process, int timeOutMilliseconds = 2000)
         {
             process.WaitForExit(timeOutMilliseconds);
 
@@ -186,10 +188,32 @@ namespace My
             {
                 if (process.Responding)
                     process.CloseMainWindow();
-                else
-                    process.Kill();
+            }
+            try
+            { process.Kill(); }
+            catch { }
+        }
+        #endregion
+
+        #region useful functionality for chromedriver
+        public static Image downloadImageFromURL(string url, out int flagsCount)
+        {
+            flagsCount = -1;
+            using (WebClient webClient = new WebClient())
+            {
+                byte[] data = webClient.DownloadData(url);
+
+                using (MemoryStream mem = new MemoryStream(data))
+                {
+                    using (var yourImage = Image.FromStream(mem))
+                    {
+                        flagsCount = yourImage.Flags;
+                        return yourImage;
+                    }
+                }
             }
         }
+
 
         public static IWebElement findLastElement(ChromeDriver chrome, string text, string tag = "", string id = "")
         {
@@ -204,6 +228,7 @@ namespace My
             }
             return chrome.FindElementByXPath(string.Format("//*[contains(text(), '{0}')]", text));
         }
+        #endregion
 
     }
 }
