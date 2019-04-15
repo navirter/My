@@ -27,7 +27,7 @@ namespace My
         /// last created chromeDriver
         /// </summary>
         public static ChromeDriverHelper chromeDriverHelper { get; private set; }
-        public static List<ChromeDriverHelper> ChromeDriverHelpers { get; private set; }
+        public static List<ChromeDriverHelper> ChromeDriverHelpers { get; private set; } = new List<ChromeDriverHelper>();
 
         public class ChromeDriverHelper
         {
@@ -116,14 +116,24 @@ namespace My
                 #endregion
                 //get chrome related processes before initialization
                 var chromeRelatedIds = Process.GetProcesses()
-                    .Where(s => _processesToCheck.FirstOrDefault(x => s.ProcessName.ToLower().Contains(x)) != null);
+                    .Where(s => _processesToCheck.FirstOrDefault(x => s.ProcessName.ToLower().Contains(x)) != null)
+                    .ToList();
                 //initialize chromedriver
-                ChromeDriver chrome = new ChromeDriver(service, options);                                
+                var driverStartTime = Process.GetCurrentProcess().StartTime;
+                ChromeDriver chrome = new ChromeDriver(service, options);//cant instantize if onother cd exists for some reasons
                 //get chrome related processes after initialization
                 var latestChromeRelatedIds = Process.GetProcesses()
-                    .Where(s => _processesToCheck.FirstOrDefault(x => s.ProcessName.ToLower().Contains(x)) != null);
+                    .Where(s => _processesToCheck.FirstOrDefault(x => s.ProcessName.ToLower().Contains(x)) != null
+                    && s.StartTime > driverStartTime)
+                    .ToList();
                 //save newly created processes' ids to list
-                lastCreatedDriverIds = latestChromeRelatedIds.Except(chromeRelatedIds).Select(s => s.Id.ToString()).ToList();
+                lastCreatedDriverIds = new List<string>();
+                latestChromeRelatedIds.ForEach(s =>
+                {
+                    var match = chromeRelatedIds.FirstOrDefault(a => a.Id == s.Id);
+                    if (match == null)//if there was no such chrome related id before initialization
+                        lastCreatedDriverIds.Add(s.Id.ToString());
+                });
                 //save new helper to list
                 var lastHelper = new ChromeDriverHelper() { ChromeDriver = chrome, AttachedProcessesIds = lastCreatedDriverIds };
                 ChromeDriverHelpers.Add(lastHelper);
@@ -161,24 +171,22 @@ namespace My
         }
         public static void chromedriver_disposeAll()
         {
-            
+
             string path = Directory.GetCurrentDirectory() + "\\drivers.txt";
-            try
-            {
-                string[] lines = File.ReadAllLines(path);
-                for (int i = 0; i < lines.Length; i++)
-                    try
-                    {
-                        Process p = Process.GetProcessById(int.Parse(lines[i]));
+            string[] lines = File.ReadAllLines(path);
+            for (int i = 0; i < lines.Length; i++)
+                try
+                {
+                    Process p = Process.GetProcessById(int.Parse(lines[i]));
+                    if (p != null)
                         killProc(p);
-                    }
-                    catch(Exception e)
-                    { throw new Exception("Can't kill process:" + lines[i] + "\n" + e.Message); }
-                chromeDriverHelper = null;
-                ChromeDriverHelpers = new List<ChromeDriverHelper>();
-                File.WriteAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", chromeDriversIds);
-            }
-            catch { }
+                }
+                catch
+                {
+                }
+            chromeDriverHelper = null;
+            ChromeDriverHelpers = new List<ChromeDriverHelper>();
+            File.WriteAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", chromeDriversIds);
         }
         static void killProc(Process process, int timeOutMilliseconds = 2000)
         {
