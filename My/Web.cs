@@ -20,6 +20,9 @@ using System.Xml.Serialization;
 
 namespace My
 {
+    /// <summary>
+    /// A wrapper for fome functionality from OpenQA.Selenium.Chrome
+    /// </summary>
     public static class Web
     {       
         #region chromeDriver management
@@ -54,14 +57,6 @@ namespace My
         "chromedriver",
         "conhost"};
 
-        static void waitSmoothly(double seconds)
-        {
-            for (double i = 0.1; i < seconds; i += 0.1)
-            {
-                Application.DoEvents();
-                Thread.Sleep(100);
-            }
-        }
 
         /// <summary>
         /// Returns a new chromedriver instance with given parameters, and saves its information.\n
@@ -277,7 +272,23 @@ namespace My
             return chrome.FindElementByXPath(string.Format("//*[contains(text(), '{0}')]", text));
         }
 
-        #region smooth chrome navigation
+        #region NavigateChrome(smooth chrome navigation)
+
+        #region last chrome 
+        /// <summary>
+        /// Smooth chrome navigation. Last chrome is used. Can be stopped.
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="minDelaySeconds"></param>
+        /// <param name="maxDelaySeconds"></param>
+        /// <param name="stop"></param>
+        /// <param name="tryouts"></param>
+        /// <returns></returns>
+        public static bool NavigateLastChrome(string url, int minDelaySeconds, int maxDelaySeconds, ref bool stop, int tryouts = 3)
+        {
+            return NavigateChrome(Web.LastChromeDriverHelper.ChromeDriver, url, minDelaySeconds, maxDelaySeconds, ref stop, tryouts);
+        }
+
         /// <summary>
         /// Smooth chrome navigation. Last chrome is used
         /// </summary>
@@ -292,6 +303,19 @@ namespace My
         }
 
         /// <summary>
+        /// Smooth chrome navigation. Last chrome is used. Can be stopped.
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="delaySeconds"></param>
+        /// <param name="stop"></param>
+        /// <param name="tryouts"></param>
+        /// <returns></returns>
+        public static bool NavigateLastChrome(string url, int delaySeconds, ref bool stop, int tryouts = 3)
+        {
+            return NavigateChrome(Web.LastChromeDriverHelper.ChromeDriver, url, delaySeconds, ref stop, tryouts);
+        }
+
+        /// <summary>
         /// Smooth chrome navigation. Last chrome is used
         /// </summary>
         /// <param name="url"></param>
@@ -301,6 +325,24 @@ namespace My
         public static bool NavigateLastChrome(string url, double delaySeconds, int tryouts = 3)
         {
             return NavigateChrome(Web.LastChromeDriverHelper.ChromeDriver, url, delaySeconds, tryouts);
+        }
+        #endregion
+
+        #region target chrome
+        /// <summary>
+        /// Smooth chrome navigation. Can be stopped.
+        /// </summary>
+        /// <param name="cd"></param>
+        /// <param name="url"></param>
+        /// <param name="minDelaySeconds"></param>
+        /// <param name="maxDelaySeconds"></param>
+        /// <param name="stop"></param>
+        /// <param name="tryouts"></param>
+        /// <returns></returns>
+        public static bool NavigateChrome(ChromeDriver cd, string url, int minDelaySeconds, int maxDelaySeconds, ref bool stop, int tryouts = 3)
+        {
+            double rand = new Random().Next(minDelaySeconds, maxDelaySeconds);
+            return NavigateChrome(cd, url, rand, ref stop, tryouts);
         }
 
         /// <summary>
@@ -317,6 +359,50 @@ namespace My
             double rand = new Random().Next(minDelaySeconds, maxDelaySeconds);
             return NavigateChrome(cd, url, rand, tryouts);
         }
+
+
+        /// <summary>
+        /// Smooth chrome navigation. Can be stopped.
+        /// </summary>
+        /// <param name="cd"></param>
+        /// <param name="url"></param>
+        /// <param name="delay"></param>
+        /// <param name="tryouts"></param>
+        /// <returns></returns>
+        public static bool NavigateChrome(ChromeDriver cd, string url, double delaySeconds, ref bool stop, int tryouts = 3)
+        {
+            #region check arguments
+            if (cd == null)
+                throw new ArgumentNullException("Chrome is null");
+            if (string.IsNullOrEmpty(url))
+                throw new ArgumentNullException("URL is null or empty");
+            if (delaySeconds <= 0 || tryouts <= 0)
+                throw new ArgumentOutOfRangeException("Delay and tryouts cannot be less or equal 0");
+            #endregion
+            try
+            {
+                bool done = false;
+                for (int i = 0; i < tryouts; i++)
+                {
+                    cd.Url = url;
+                    waitSmoothly(delaySeconds, ref stop);
+                    if (!cd.PageSource.Contains("No internet"))
+                    {
+                        done = true;
+                        break;
+                    }
+                }
+                if (done)
+                    return true;
+                else
+                    throw new Exception("No internet connection after " + tryouts + " tryouts");
+
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Cannot navigate chrome: " + e.Message);
+            }
+        }//main function with stop parameter
 
         /// <summary>
         /// Smooth chrome navigation
@@ -362,6 +448,30 @@ namespace My
         }//main function
         #endregion
 
+        #endregion
+
+        #endregion
+
+        #region waitSmoothly
+        static void waitSmoothly(double seconds, ref bool stop)
+        {
+            for (double i = 0.1; i < seconds; i += 0.1)
+            {
+                Application.DoEvents();
+                Thread.Sleep(100);
+                if (stop)
+                    break;
+            }
+        }
+
+        static void waitSmoothly(double seconds)
+        {
+            for (double i = 0.1; i < seconds; i += 0.1)
+            {
+                Application.DoEvents();
+                Thread.Sleep(100);
+            }
+        }
         #endregion
     }
 }
