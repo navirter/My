@@ -37,6 +37,12 @@ namespace My
                 colorToBeShown = ColorToBeShown;
             }
         }
+        public enum Side
+        {
+            Left, 
+            Right, 
+            Fill
+        }
         public class Graphics
         {
             public int HorizontalMargin = 0;
@@ -44,14 +50,16 @@ namespace My
             public int Width = 0;
             public int Height = 0;
             public AnchorStyles Anchors;
+            public Side Side;
 
-            public Graphics(int horizontalMargin, int verticalMargin, int Width, int Height, AnchorStyles anchors)
+            public Graphics(int horizontalMargin, int verticalMargin, int Width, int Height, AnchorStyles anchors, Side side)
             {
                 this.HorizontalMargin = horizontalMargin;
                 this.VerticalMargin = verticalMargin;
                 this.Width = Width;
                 this.Height = Height;
                 this.Anchors = anchors;
+                this.Side = side;
             }
         }
         public class Unit
@@ -141,6 +149,7 @@ namespace My
             , int dangerMemoryLoadMB, Graphics graphics, Form owner,
             bool showSleepingInfo = false, bool unpauseIfIdle = false, bool pressRecalibrationAtStart = false)
         {
+            CheckForIllegalCrossThreadCalls = false;
             #region validation
             if (colorizationSettings == null || colorizationSettings.Contains(null))
                 throw new NullReferenceException("ColorizationSettings cannot be null");
@@ -160,7 +169,14 @@ namespace My
             if (x <= 0) x = 0;
             int y = owner.Height - graphics.VerticalMargin - graphics.Height;
             if (y <= 0) y = 0;
+            if (graphics.Side == Side.Left)
+            {
+                x = graphics.HorizontalMargin;
+                y = graphics.VerticalMargin;
+            }
             this.Location = new System.Drawing.Point(x, y);
+            if (graphics.Side == Side.Fill)
+                this.Dock = DockStyle.Fill;
             this.Size = new System.Drawing.Size(graphics.Width, graphics.Height);
             this.Anchor = graphics.Anchors;
             _owner = owner; _owner.Controls.Add(this);
