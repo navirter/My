@@ -20,7 +20,6 @@ namespace My
     public partial class ThreadSeeker : UserControl, IDisposable
     {
 
-        #region (un)initialisation
         /// <summary>
         /// part of program may be empty
         /// </summary>
@@ -38,72 +37,144 @@ namespace My
                 colorToBeShown = ColorToBeShown;
             }
         }
-        List<ThreadSeekerColorisationSetting> threadSeekerColorisationSettings = new List<ThreadSeekerColorisationSetting>();
         public class Graphics
         {
-            public int x;
-            public int y;
-            public int width = 0;
-            public int height = 0;
-            public AnchorStyles anchors;
-            public Graphics(int X, int Y, int Width, int Height, AnchorStyles anchors)
-            {
-                x = X;
-                y = Y;
-                width = Width;
-                height = Height;
-                this.anchors = anchors;
-            }
-            public Graphics(int X, int Y, AnchorStyles anchors)
-            {
-                x = X;
-                y = Y;
-                this.anchors = anchors;
-            }
-        }
-        public Form owner;
-        static Button pause_button = null;
-        public bool initialised { get; private set; } = false;
+            public int HorizontalMargin = 0;
+            public int VerticalMargin = 0;
+            public int Width = 0;
+            public int Height = 0;
+            public AnchorStyles Anchors;
 
-        /// <summary>        
-        /// launch with the program
-        /// </summary>
-        /// <param name="colorisationSettings"> may contain 0 elements or be null</param>
-        /// <param name="ReshowDelaySec">how many seconds between reshows</param>
-        public ThreadSeeker(ThreadSeekerColorisationSetting[] colorisationSettings, int ReshowDelaySec
-            , int dangerMemoryLoadMB, Graphics graphics, Form Owner,
-            bool ShowSleepingInfo = false, bool LaunchIfIdle = false, bool pressRecalibrationAtStart = false)
-        {
-            initialise(colorisationSettings, ReshowDelaySec, dangerMemoryLoadMB, graphics, Owner, ShowSleepingInfo, LaunchIfIdle, pressRecalibrationAtStart);
+            public Graphics(int horizontalMargin, int verticalMargin, int Width, int Height, AnchorStyles anchors)
+            {
+                this.HorizontalMargin = horizontalMargin;
+                this.VerticalMargin = verticalMargin;
+                this.Width = Width;
+                this.Height = Height;
+                this.Anchors = anchors;
+            }
         }
-        public ThreadSeeker()
+        public class Unit
         {
+            public DateTime dateTime;
+            public int cpu_usage;
+            public long memory_usage;
+            public bool is_important;
+            public bool is_system_message;
+            public string part;
+            public string value;
+            public Unit() { }
+            public Unit(DateTime DateTime, int Cpu_usage, long Memory_usage, bool Is_important
+                , bool Is_system_message, string Part, string Value)
+            {
+                this.dateTime = DateTime;
+                this.cpu_usage = Cpu_usage;
+                this.memory_usage = Memory_usage;
+                this.is_important = Is_important;
+                this.is_system_message = Is_system_message;
+                this.part = Part;
+                this.value = Value;
+            }
+            /// <summary>
+            /// overridden
+            /// </summary>
+            /// <returns></returns>
+            public override string ToString()
+            {
+                string diagnostics = cpu_usage + "% " + memory_usage + " мб";//"100% 1000 mb"=12 char           
+                while (diagnostics.Length < "100% 1000 mb_".Length)
+                    diagnostics += "_";
+                string impostring = "";
+                if (is_system_message) impostring = "[system]";
+                if (is_important) impostring += "[important]";
+                string date = DateAndTime.convertDateTimeToString(dateTime);
+                while (date.Length < "2018.07.14: 18.23.24_".Length) date = date + "_";
+                string prog_part = "[" + part + "]";
+                prog_part = "[" + part.Replace("__", "_") + "]";
+                string message =
+                     date
+                    + diagnostics
+                    + impostring
+                    + prog_part
+                    + value;
+                return message;
+            }
+            public static Unit Parse(string s)
+            {
+                //{MES}2018.07.06.00.53.59_0% 34 мб__________[system][worker.read_info]done
+                try
+                {
+                    string[] splits = s.Replace("\r\n", "").Split(new[] { "мб" }, StringSplitOptions.RemoveEmptyEntries);
+                    string[] left_parts = splits[0].Split(new[] { "_", "%" }, StringSplitOptions.RemoveEmptyEntries);
+                    DateTime dt = DateAndTime.convertStringToDateTime(left_parts[0]);
+                    //for some reason the correct value from func is nor assigned to valueable
+                    int cpu = Convert.ToInt32(left_parts[1]);
+                    long mem = Convert.ToInt64(left_parts[2]);
+                    bool system = false;
+                    if (splits[1].Contains("[system]"))
+                        system = true;
+                    bool important = false;
+                    if (splits[1].Contains("[important]"))
+                        important = true;
+                    string part_and_mes = splits[1].Substring(splits[1].IndexOf("[")).Replace("[system]", "").Replace("[important]", "");
+                    string[] pams = part_and_mes.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries);
+                    string part = pams[0];
+                    string mes = pams[1];
+                    Unit u = new Unit(dt, cpu, mem, important, system, part, mes);
+                    return u;
+                }
+                catch { return null; }
+            }
         }
-        public void initialise(ThreadSeekerColorisationSetting[] colorisationSettings, int ReshowDelaySec
+
+
+        #region (un)initialisation
+
+        #region initialization fields
+        public Form owner;
+        public bool initialized { get; private set; } = false;
+        static Button pause_button = null;
+        List<ThreadSeekerColorisationSetting> threadSeekerColorisationSettings = new List<ThreadSeekerColorisationSetting>();
+        #endregion
+
+        public ThreadSeeker(ThreadSeekerColorisationSetting[] colorizationSettings, int ReshowDelaySec
             , int dangerMemoryLoadMB, Graphics graphics, Form Owner,
-            bool ShowSleepingInfo = false, bool LaunchIfIdle = false, bool pressRecalibrationAtStart = false)
+            bool ShowSleepingInfo = false, bool UnpauseIfIdle = false, bool pressRecalibrationAtStart = false)
         {
-            CheckForIllegalCrossThreadCalls = false;
+            #region validation
+            if (colorizationSettings == null || colorizationSettings.Contains(null))
+                throw new NullReferenceException("ColorizationSettings cannot be null");
+            if (reshowDelay <= 0 || dangerMemoryLoadMB <= 0)
+                throw new IndexOutOfRangeException("No int can be qual or less that 0");
+            if (graphics.HorizontalMargin < 0 || graphics.VerticalMargin < 0 || graphics.Width <= 0 || graphics.Height <= 0)
+                throw new ArgumentOutOfRangeException("No graphics int can be qual or less that 0");
+            if (Owner == null)
+                throw new ArgumentNullException("Owner can't be null");
+            #endregion
             #region launch and initialisations
+            threadSeekerColorisationSettings = colorizationSettings.ToList();
+            reshowDelay = ReshowDelaySec;
+            dangerMemoryMB = dangerMemoryLoadMB;
+            #region graphics
+            int x = owner.Width - graphics.HorizontalMargin - graphics.Width;
+            if (x <= 0) x = 0;
+            int y = owner.Height - graphics.VerticalMargin - graphics.Height;
+            if (y <= 0) y = 0;
+            this.Location = new System.Drawing.Point(x, y);
+            this.Size = new System.Drawing.Size(graphics.Width, graphics.Height);
+            this.Anchor = graphics.Anchors;
             owner = Owner; owner.Controls.Add(this);
-            this.Location = new System.Drawing.Point(graphics.x, graphics.y);
-            if (graphics.width != 0 && graphics.height != 0)
-                this.Size = new System.Drawing.Size(graphics.width, graphics.height);
-            this.Anchor = graphics.anchors;
             InitializeComponent();
             this.Show();
+            #endregion
             if (pressRecalibrationAtStart)
                 button5.PerformClick();
-            if (colorisationSettings != null)
-                threadSeekerColorisationSettings = colorisationSettings.ToList();
-            //howMuch = Howmuch;
+            if (colorizationSettings != null)
             dangerMemoryMB = dangerMemoryLoadMB;
             showSleepingInfo = ShowSleepingInfo;
-            launchIfIdle = LaunchIfIdle;
+            launchIfIdle = UnpauseIfIdle;
             start = DateTime.Now;
-            if (reshowDelay >= 1)
-                reshowDelay = ReshowDelaySec;
-            //groupBox1.Text += "(" + reshowDelay + " сек)";
+            reshowDelay = ReshowDelaySec;
             #endregion
             #region read things
             threads = new List<List<Unit>>();
@@ -148,7 +219,7 @@ namespace My
             }
             if (!closedCorrectly) MessageBox.Show("Программа не была закрыта корректно");
             #endregion
-            initialised = true;
+            initialized = true;
             #region manage threads
             try { thread_renew_data.Abort(); } catch { }
             thread_renew_data = new Thread(renewData);
@@ -164,6 +235,7 @@ namespace My
             addMessage(part, "__________________________________________________", true);
             addMessage(part, "Логгер запущен", true, false, true);
         }
+        
         /// <summary>
         /// must be used to stop cycles
         /// </summary>
@@ -178,9 +250,7 @@ namespace My
         ~ThreadSeeker()
         {
             close();
-        }
-
-
+        }        
 
         string[] getAllFilesInPeriod()
         {
@@ -285,78 +355,6 @@ namespace My
         static List<Process> additional_processes_to_consider = new List<Process>();
 
         static List<List<Unit>> threads = new List<List<Unit>>();
-        public class Unit
-        {
-            public DateTime dateTime;
-            public int cpu_usage;
-            public long memory_usage;
-            public bool is_important;
-            public bool is_system_message;
-            public string part;
-            public string value;
-            public Unit() { }
-            public Unit(DateTime DateTime, int Cpu_usage, long Memory_usage, bool Is_important
-                , bool Is_system_message, string Part, string Value)
-            {
-                this.dateTime = DateTime;
-                this.cpu_usage = Cpu_usage;
-                this.memory_usage = Memory_usage;
-                this.is_important = Is_important;
-                this.is_system_message = Is_system_message;
-                this.part = Part;
-                this.value = Value;
-            }
-            /// <summary>
-            /// overridden
-            /// </summary>
-            /// <returns></returns>
-            public override string ToString()
-            {
-                string diagnostics = cpu_usage + "% " + memory_usage + " мб";//"100% 1000 mb"=12 char           
-                while (diagnostics.Length < "100% 1000 mb_".Length)
-                    diagnostics += "_";
-                string impostring = "";
-                if (is_system_message) impostring = "[system]";
-                if (is_important) impostring += "[important]";
-                string date = DateAndTime.convertDateTimeToString(dateTime);
-                while (date.Length < "2018.07.14: 18.23.24_".Length) date = date + "_";
-                string prog_part = "[" + part + "]";
-                prog_part = "[" + part.Replace("__", "_") + "]";
-                string message =
-                     date
-                    + diagnostics
-                    + impostring
-                    + prog_part
-                    + value;
-                return message;
-            }
-            public static Unit Parse(string s)
-            {
-                //{MES}2018.07.06.00.53.59_0% 34 мб__________[system][worker.read_info]done
-                try
-                {
-                    string[] splits = s.Replace("\r\n", "").Split(new[] { "мб" }, StringSplitOptions.RemoveEmptyEntries);
-                    string[] left_parts = splits[0].Split(new[] { "_", "%" }, StringSplitOptions.RemoveEmptyEntries);
-                    DateTime dt = DateAndTime.convertStringToDateTime(left_parts[0]);
-                    //for some reason the correct value from func is nor assigned to valueable
-                    int cpu = Convert.ToInt32(left_parts[1]);
-                    long mem = Convert.ToInt64(left_parts[2]);
-                    bool system = false;
-                    if (splits[1].Contains("[system]"))
-                        system = true;
-                    bool important = false;
-                    if (splits[1].Contains("[important]"))
-                        important = true;
-                    string part_and_mes = splits[1].Substring(splits[1].IndexOf("[")).Replace("[system]", "").Replace("[important]", "");
-                    string[] pams = part_and_mes.Split(new[] { "[", "]" }, StringSplitOptions.RemoveEmptyEntries);
-                    string part = pams[0];
-                    string mes = pams[1];
-                    Unit u = new Unit(dt, cpu, mem, important, system, part, mes);
-                    return u;
-                }
-                catch { return null; }
-            }
-        }
 
         static bool showDetailedInfo = false;
         static bool showImportantOnly = false;
@@ -365,7 +363,6 @@ namespace My
 
         Thread thread_renew_data;
         Thread thread_renew_sleep;
-
 
         #region delegates
         delegate void voidstringstringbool(string s1, string s2, bool b, bool system, bool isCurrentActivity);
@@ -376,6 +373,7 @@ namespace My
 
         #region public static funcs
 
+        #region AddMsessage
         /// <summary>
         /// Class containing complete addMessage functions for different cases. CurrentActivity & system = true and errors important
         /// </summary>        
@@ -398,13 +396,17 @@ namespace My
                 ThreadSeeker.addMessage("not needed", particularPart, false, true);
             }
         }
+        #endregion
 
+        #region addThread
         [Obsolete("Use addMessage")]
         static public void addThread(string message, string programPart, bool important = false, bool system = false, bool isCurrentActivity = true)
         {
             addMessage(programPart, message, important, system, isCurrentActivity);
         }
+        #endregion
 
+        #region addMessage
         /// <summary>
         /// 
         /// </summary>
@@ -477,19 +479,22 @@ namespace My
             if (!unit.is_system_message)
                 somethingChanged = true;
         }
-        static public void notifyImportantMessage()
-        {
-            if (!File.Exists(Directory.GetCurrentDirectory() + "\\temp\\lookAtLog.txt"))
-                File.Create(Directory.GetCurrentDirectory() + "\\temp\\lookAtLog.txt");
-        }
-
         static void appendLineToFile(string message)
         {
             string path = create_folder_and_get_path();
             File.AppendAllLines(path, new[] { message }, Encoding.GetEncoding(1251));
         }
+        #endregion
 
-        #region processses
+        #region notifyImportantMessage
+        static public void notifyImportantMessage()
+        {
+            if (!File.Exists(Directory.GetCurrentDirectory() + "\\temp\\lookAtLog.txt"))
+                File.Create(Directory.GetCurrentDirectory() + "\\temp\\lookAtLog.txt");
+        }
+        #endregion
+        
+        #region add and remove process to consider
         public static void try_add_process_to_consider(Process p)
         {
             if (p != null && !additional_processes_to_consider.Contains(p))
@@ -501,7 +506,7 @@ namespace My
                 additional_processes_to_consider.Remove(p);
         }
         #endregion
-
+        
         #endregion
 
         #region private continious funcs
