@@ -26,7 +26,7 @@ namespace My
         /// <summary>
         /// last created chromeDriver
         /// </summary>
-        public static ChromeDriverHelper chromeDriverHelper { get; private set; }
+        public static ChromeDriverHelper LastChromeDriverHelper { get; private set; }
         public static List<ChromeDriverHelper> ChromeDriverHelpers { get; private set; } = new List<ChromeDriverHelper>();
 
         public class ChromeDriverHelper
@@ -137,7 +137,7 @@ namespace My
                 //save new helper to list
                 var lastHelper = new ChromeDriverHelper() { ChromeDriver = chrome, AttachedProcessesIds = lastCreatedDriverIds };
                 ChromeDriverHelpers.Add(lastHelper);
-                chromeDriverHelper = lastHelper;
+                LastChromeDriverHelper = lastHelper;
                 //save newly created processees' ids to a file
                 File.AppendAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", lastCreatedDriverIds);
                 return lastHelper;
@@ -162,44 +162,69 @@ namespace My
                 File.WriteAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", chromeDriversIds);
                 ChromeDriverHelpers.Remove(helper);
                 helper = null;
-                chromeDriverHelper = ChromeDriverHelpers.LastOrDefault();
+                LastChromeDriverHelper = ChromeDriverHelpers.LastOrDefault();
             }
             catch (Exception e)
             {
                 throw new Exception("ids(" + ids + "): " + e.Message);
             }
         }
-        public static void chromedriver_disposeAll()
+
+        static int linesCounter = 0;
+        static int linesCount = 0;
+        delegate void voidProcessInt(Process process, int integer);
+        public static void chromedriver_disposeAll(int maximumTimeoutSeconds = 10)
         {
 
             string path = Directory.GetCurrentDirectory() + "\\drivers.txt";
             string[] lines = File.ReadAllLines(path);
+            linesCount = lines.Length; linesCounter = 0;
             for (int i = 0; i < lines.Length; i++)
                 try
                 {
                     Process p = Process.GetProcessById(int.Parse(lines[i]));
-                    if (p != null)
-                        killProc(p);
+                    if (p == null)
+                    {
+                        linesCounter++;
+                        continue;
+                    }
+                    voidProcessInt vpi = killProc;
+                    vpi.BeginInvoke(p, 2000, null, null);
                 }
                 catch
                 {
                 }
-            chromeDriverHelper = null;
+            var now = DateTime.Now;
+            while (linesCounter != linesCount)
+            {
+                Application.DoEvents();
+                Thread.Sleep(100);
+                if (DateTime.Now - now > TimeSpan.FromSeconds(maximumTimeoutSeconds))
+                    break;
+            }
+            LastChromeDriverHelper = null;
             ChromeDriverHelpers = new List<ChromeDriverHelper>();
             File.WriteAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", chromeDriversIds);
         }
         static void killProc(Process process, int timeOutMilliseconds = 2000)
         {
-            process.WaitForExit(timeOutMilliseconds);
-
-            if (!process.HasExited)
-            {
-                if (process.Responding)
-                    process.CloseMainWindow();
-            }
             try
-            { process.Kill(); }
+            {
+                process.WaitForExit(timeOutMilliseconds);
+
+                if (!process.HasExited)
+                {
+                    if (process.Responding)
+                        process.CloseMainWindow();
+                }
+                process.Kill();
+            }
             catch { }
+            finally
+            {
+                linesCounter++;
+            }
+
         }
         #endregion
 
