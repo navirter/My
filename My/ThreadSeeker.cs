@@ -107,6 +107,28 @@ namespace My
                     + value;
                 return message;
             }
+            /// <summary>
+            /// A shortened version of regular ToString()
+            /// </summary>
+            /// <returns></returns>
+            public string ToStringShort()
+            {
+                string impostring = "";
+                if (is_system_message) impostring = "[system]";
+                if (is_important) impostring += "[important]";
+                string hour = dateTime.Hour.ToString(); if (hour.Length < 2) hour = "0" + hour;
+                string minute = dateTime.Minute.ToString(); if (minute.Length < 2) minute = "0" + minute;
+                string date = hour + ":" + minute;
+                while (date.Length < "18.23_".Length) date = date + "_";
+                string prog_part = "[" + part + "]";
+                prog_part = "[" + part.Replace("__", "_") + "]";
+                string message =
+                     date
+                    + impostring
+                    + prog_part
+                    + value;
+                return message;
+            }
             public static Unit Parse(string s)
             {
                 //{MES}2018.07.06.00.53.59_0% 34 мб__________[system][worker.read_info]done
@@ -155,8 +177,8 @@ namespace My
                 throw new NullReferenceException("ColorizationSettings cannot be null");
             if (_reshowDelay <= 0 || dangerMemoryLoadMB <= 0)
                 throw new IndexOutOfRangeException("No int can be qual or less that 0");
-            if (graphics.HorizontalMargin < 0 || graphics.VerticalMargin < 0 || graphics.Width <= 0 || graphics.Height <= 0)
-                throw new ArgumentOutOfRangeException("No graphics int can be qual or less that 0");
+            if (graphics.HorizontalMargin < 0 || graphics.VerticalMargin < 0 || graphics.Width < 350 || graphics.Height < 600)
+                throw new ArgumentOutOfRangeException("Margin must be >=0 and width >=350 and Heigh >=600");
             if (owner == null)
                 throw new ArgumentNullException("Owner can't be null");
             #endregion
@@ -595,7 +617,15 @@ namespace My
                             if (checking(seldates[a], requests, antirequests))
                             {
                                 if (res.Count < howMuch)
-                                    res.Add(seldates[a].ToString());
+                                {
+                                    if (checkBox2.Checked)
+                                    {
+                                        if (!seldates[a].part.EndsWith(".start"))//remove task starts
+                                            res.Add(seldates[a].ToStringShort());
+                                    }
+                                    else
+                                        res.Add(seldates[a].ToString());
+                                }
                                 found++;
                             }
                         }

@@ -48,6 +48,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
+            this.checkBox2 = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -63,7 +64,7 @@
             this.listView1.Location = new System.Drawing.Point(0, 78);
             this.listView1.MultiSelect = false;
             this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(330, 303);
+            this.listView1.Size = new System.Drawing.Size(350, 493);
             this.listView1.TabIndex = 0;
             this.toolTip1.SetToolTip(this.listView1, "Клик для копирования ссылки(если есть)\r\nДвойной клик для поллного копирования");
             this.listView1.UseCompatibleStateImageBehavior = false;
@@ -126,7 +127,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox2.Location = new System.Drawing.Point(178, 56);
             this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(152, 20);
+            this.textBox2.Size = new System.Drawing.Size(172, 20);
             this.textBox2.TabIndex = 9;
             this.toolTip1.SetToolTip(this.textBox2, "Показывать только сообщения\r\nбез слов(через &&) без учета регистра:\r\n\r\nМожно заме" +
         "нить неизвестные знаки звездочкой\r\nПример:  под \"к*ка\" попадают \"кОШка\", \"кИШка\"" +
@@ -147,6 +148,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.checkBox2);
             this.groupBox1.Controls.Add(this.button5);
             this.groupBox1.Controls.Add(this.button4);
             this.groupBox1.Controls.Add(this.textBox3);
@@ -167,7 +169,7 @@
             this.groupBox1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.groupBox1.Location = new System.Drawing.Point(0, 0);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(330, 410);
+            this.groupBox1.Size = new System.Drawing.Size(350, 600);
             this.groupBox1.TabIndex = 5;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Логгирование";
@@ -176,7 +178,7 @@
             // button4
             // 
             this.button4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.button4.Location = new System.Drawing.Point(3, 384);
+            this.button4.Location = new System.Drawing.Point(3, 574);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(35, 23);
             this.button4.TabIndex = 15;
@@ -188,20 +190,20 @@
             // 
             this.textBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox3.Location = new System.Drawing.Point(44, 386);
+            this.textBox3.Location = new System.Drawing.Point(44, 576);
             this.textBox3.Name = "textBox3";
             this.textBox3.ReadOnly = true;
             this.textBox3.ScrollBars = System.Windows.Forms.ScrollBars.Horizontal;
-            this.textBox3.Size = new System.Drawing.Size(283, 20);
+            this.textBox3.Size = new System.Drawing.Size(303, 20);
             this.textBox3.TabIndex = 14;
             // 
             // checkBox3
             // 
             this.checkBox3.AutoSize = true;
-            this.checkBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.checkBox3.Location = new System.Drawing.Point(7, 16);
+            this.checkBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.25F);
+            this.checkBox3.Location = new System.Drawing.Point(1, 15);
             this.checkBox3.Name = "checkBox3";
-            this.checkBox3.Size = new System.Drawing.Size(73, 17);
+            this.checkBox3.Size = new System.Drawing.Size(64, 16);
             this.checkBox3.TabIndex = 13;
             this.checkBox3.Text = "детально";
             this.checkBox3.UseVisualStyleBackColor = true;
@@ -232,7 +234,7 @@
             this.POtb.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.POtb.Location = new System.Drawing.Point(261, 33);
             this.POtb.Name = "POtb";
-            this.POtb.Size = new System.Drawing.Size(68, 20);
+            this.POtb.Size = new System.Drawing.Size(88, 20);
             this.POtb.TabIndex = 11;
             this.POtb.Text = "2100.12.31";
             this.POtb.TextChanged += new System.EventHandler(this.save_settings);
@@ -245,7 +247,7 @@
             this.Stb.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.Stb.Location = new System.Drawing.Point(261, 13);
             this.Stb.Name = "Stb";
-            this.Stb.Size = new System.Drawing.Size(68, 20);
+            this.Stb.Size = new System.Drawing.Size(88, 20);
             this.Stb.TabIndex = 11;
             this.Stb.Text = "2017.01.01";
             this.Stb.TextChanged += new System.EventHandler(this.save_settings);
@@ -275,7 +277,7 @@
             // 
             this.checkBox1.AutoSize = true;
             this.checkBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.25F);
-            this.checkBox1.Location = new System.Drawing.Point(81, 17);
+            this.checkBox1.Location = new System.Drawing.Point(65, 15);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(91, 16);
             this.checkBox1.TabIndex = 5;
@@ -283,14 +285,26 @@
             this.checkBox1.UseVisualStyleBackColor = true;
             this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
+            // checkBox2
+            // 
+            this.checkBox2.AutoSize = true;
+            this.checkBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.25F);
+            this.checkBox2.Location = new System.Drawing.Point(157, 15);
+            this.checkBox2.Name = "checkBox2";
+            this.checkBox2.Size = new System.Drawing.Size(53, 16);
+            this.checkBox2.TabIndex = 17;
+            this.checkBox2.Text = "Сжать";
+            this.checkBox2.UseVisualStyleBackColor = true;
+            this.checkBox2.CheckedChanged += new System.EventHandler(this.somethingChanged);
+            // 
             // ThreadSeeker
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.groupBox1);
-            this.MinimumSize = new System.Drawing.Size(330, 410);
+            this.MinimumSize = new System.Drawing.Size(350, 600);
             this.Name = "ThreadSeeker";
-            this.Size = new System.Drawing.Size(330, 410);
+            this.Size = new System.Drawing.Size(350, 600);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.ResumeLayout(false);
@@ -318,5 +332,6 @@
         private System.Windows.Forms.TextBox textBox3;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.CheckBox checkBox2;
     }
 }
