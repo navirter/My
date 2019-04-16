@@ -276,7 +276,92 @@ namespace My
             }
             return chrome.FindElementByXPath(string.Format("//*[contains(text(), '{0}')]", text));
         }
+
+        #region smooth chrome navigation
+        /// <summary>
+        /// Smooth chrome navigation. Last chrome is used
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="minDelaySeconds"></param>
+        /// <param name="maxDelaySeconds"></param>
+        /// <param name="tryouts"></param>
+        /// <returns></returns>
+        public static bool NavigateLastChrome(string url, int minDelaySeconds, int maxDelaySeconds, int tryouts = 3)
+        {
+            return NavigateChrome(Web.LastChromeDriverHelper.ChromeDriver, url, minDelaySeconds, maxDelaySeconds, tryouts);
+        }
+
+        /// <summary>
+        /// Smooth chrome navigation. Last chrome is used
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="delaySeconds"></param>
+        /// <param name="tryouts"></param>
+        /// <returns></returns>
+        public static bool NavigateLastChrome(string url, double delaySeconds, int tryouts = 3)
+        {
+            return NavigateChrome(Web.LastChromeDriverHelper.ChromeDriver, url, delaySeconds, tryouts);
+        }
+
+        /// <summary>
+        /// Smooth chrome navigation.
+        /// </summary>
+        /// <param name="cd"></param>
+        /// <param name="url"></param>
+        /// <param name="minDelaySeconds"></param>
+        /// <param name="maxDelaySeconds"></param>
+        /// <param name="tryouts"></param>
+        /// <returns></returns>
+        public static bool NavigateChrome(ChromeDriver cd, string url, int minDelaySeconds, int maxDelaySeconds, int tryouts =3)
+        {
+            double rand = new Random().Next(minDelaySeconds, maxDelaySeconds);
+            return NavigateChrome(cd, url, rand, tryouts);
+        }
+
+        /// <summary>
+        /// Smooth chrome navigation
+        /// </summary>
+        /// <param name="cd"></param>
+        /// <param name="url"></param>
+        /// <param name="delay"></param>
+        /// <param name="tryouts"></param>
+        /// <returns></returns>
+        public static bool NavigateChrome(ChromeDriver cd, string url, double delaySeconds, int tryouts = 3)
+        {
+            #region check arguments
+            if (cd == null)
+                throw new ArgumentNullException("Chrome is null");
+            if (string.IsNullOrEmpty(url))
+                throw new ArgumentNullException("URL is null or empty");
+            if (delaySeconds <= 0 || tryouts <= 0)
+                throw new ArgumentOutOfRangeException("Delay and tryouts cannot be less or equal 0");
+            #endregion
+            try
+            {
+                bool done = false;
+                for (int i = 0; i < tryouts; i++)
+                {
+                    cd.Url = url;
+                    waitSmoothly(delaySeconds);
+                    if (!cd.PageSource.Contains("No internet"))
+                    {
+                        done = true;
+                        break;
+                    }
+                }
+                if (done)
+                    return true;
+                else
+                    throw new Exception("No internet connection after " + tryouts + " tryouts");
+
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Cannot navigate chrome: " + e.Message);
+            }
+        }//main function
         #endregion
 
+        #endregion
     }
 }
