@@ -38,6 +38,7 @@ namespace My
             public List<string> AttachedProcessesIds { get; set; }
         }
 
+        #region public static List<string> chromeDriversIds
         static List<string> lastCreatedDriverIds = new List<string>();//filled at chromedriver initialization
         /// <summary>
         /// All attached processes of all helpers
@@ -51,13 +52,14 @@ namespace My
                 return res;
             }
         }
+        #endregion
 
         static string[] _processesToCheck = {   
         "chrome",
         "chromedriver",
         "conhost"};
 
-
+        #region  public static ChromeDriverHelper chromedriver_set_up
         /// <summary>
         /// Returns a new chromedriver instance with given parameters, and saves its information.\n
         /// Each set_up must be followed by dispose or disposeAll.
@@ -157,6 +159,8 @@ namespace My
                 throw new Exception(e.Message);
             }
         }
+        #endregion
+
         public static void chromedriver_dispose(ChromeDriverHelper helper)
         {
             string ids = string.Join(", ", helper.AttachedProcessesIds);
@@ -180,6 +184,7 @@ namespace My
             }
         }
 
+        #region public static void chromedriver_disposeAll(int maximumTimeoutSeconds = 10)
         static int linesCounter = 0;
         static int linesCount = 0;
         delegate void voidProcessInt(Process process, int integer);
@@ -216,6 +221,8 @@ namespace My
             ChromeDriverHelpers = new List<ChromeDriverHelper>();
             File.WriteAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", chromeDriversIds);
         }
+        #endregion
+
         static void killProc(Process process, int timeOutMilliseconds = 2000)
         {
             try
@@ -257,8 +264,15 @@ namespace My
             }
         }
 
-
-        public static IWebElement findLastElement(ChromeDriver chrome, string text, string tag = "", string id = "")
+        /// <summary>
+        /// At least 1 parameter must not be empty. Serches by Id first, then by tag, then by text. In the last case it returns the first occurence
+        /// </summary>
+        /// <param name="chrome"></param>
+        /// <param name="text"></param>
+        /// <param name="tag"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public static IWebElement FindLastOrDefaultElement(ChromeDriver chrome, string text = "", string tag = "", string id = "")
         {
             if (id != "")
             {
@@ -267,9 +281,17 @@ namespace My
             if (tag != "")
             {
                 var elems = chrome.FindElements(By.TagName(tag));
-                return elems.Last(s => s.Text == text || s.Text.Trim() == text);
+                if (text != "")
+                    return elems.LastOrDefault(s => s.Text == text || s.Text.Trim() == text);
+                else
+                    return elems.LastOrDefault();
             }
-            return chrome.FindElementByXPath(string.Format("//*[contains(text(), '{0}')]", text));
+            var texts = chrome.FindElementsByXPath(string.Format("//*[contains(text(), '{0}')]", text));
+            var lastText = texts.LastOrDefault();
+            if (lastText != null)
+                return lastText;
+            else
+                return null;
         }
 
         #region NavigateChrome(smooth chrome navigation)
@@ -398,28 +420,26 @@ namespace My
             {
                 int noInternetTimes = 0;
                 int connectionResetTimes = 0;
+                int mainFrameErrorTimes = 0;
                 for (int i = 0; i < tryouts; i++)
                 {
                     cd.Url = url;
                     waitSmoothly(delaySeconds, ref stop);
                     if (stop) return false;
-                    if (cd.PageSource.Contains("No internet"))
-                    {
-                        noInternetTimes++;
+
+                    isExceptionalError(cd.PageSource, cd.Url);
+                    if (isContinuableError(cd, ref noInternetTimes, ref connectionResetTimes, ref mainFrameErrorTimes))
                         continue;
-                    }
-                    if (cd.PageSource.Contains("The connection was reset."))
-                    {
-                        connectionResetTimes++;
-                        continue;
-                    }
+                    //if no errors
                     return true;
                 }
-                string message = "No internet connection after " + tryouts + " tryouts";
+                string message = "No connection after " + tryouts + " tryouts";
                 if (noInternetTimes > 0)
-                    message += "\nNo internet connection " + noInternetTimes;
+                    message += "\nNo internet connection times " + noInternetTimes;
                 if (connectionResetTimes > 0)
                     message += "\nConnection reset times " + connectionResetTimes;
+                if (mainFrameErrorTimes > 0)
+                    message += "\nCommon error times " + mainFrameErrorTimes;
                 throw new Exception(message);
 
             }
@@ -428,7 +448,39 @@ namespace My
                 throw new Exception("Cannot navigate chrome: " + e.Message);
             }
         }//main function with stop parameter
-        
+
+        static bool isContinuableError(ChromeDriver cd, ref int noInternetTimes, ref int connectionResetTimes, ref int mainFrameErrorTimes)
+        {
+            if (cd.PageSource.Contains("No internet"))
+            {
+                noInternetTimes++;
+                return true;
+            }
+            if (cd.PageSource.Contains("The connection was reset."))
+            {
+                connectionResetTimes++;
+                return true;
+            }
+            try
+            {
+                var mfe = FindLastOrDefaultElement(cd, "", "div", "main-frame-error");
+                if (mfe != null)
+                {
+                    mainFrameErrorTimes++;
+                    return true;
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        static void isExceptionalError(string pageSource, string URL)
+        {
+            if (URL.StartsWith("blocked"))
+                throw new Exception("Proxy failed to fight through cencorship!");
+            if (pageSource.Contains("unexpectedly closed the connection."))
+                throw new Exception("Site unexpectedly closed the connection.");
+        }
         #endregion
 
         #endregion
