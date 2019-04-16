@@ -39,7 +39,7 @@ namespace My
         /// <summary>
         /// All attached processes of all helpers
         /// </summary>
-        static List<string> chromeDriversIds
+        public static List<string> chromeDriversIds
         {
             get
             {
