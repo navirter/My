@@ -54,10 +54,21 @@ namespace My
         "chromedriver",
         "conhost"};
 
+        static void waitSmoothly(double seconds)
+        {
+            for (double i = 0.1; i < seconds; i += 0.1)
+            {
+                Application.DoEvents();
+                Thread.Sleep(100);
+            }
+        }
+
         /// <summary>
         /// Returns a new chromedriver instance with given parameters, and saves its information.\n
         /// Each set_up must be followed by dispose or disposeAll.
         /// It's possible that some other chrome tabs(even in normal browsers) created during execution of this function are closed at later disposal
+        /// It's better off launching projects with this function as administrator.
+        /// To force so: create app.manifest and set it there <requestedExecutionLevel level = "requireAdministrator" uiAccess="false" />
         /// </summary>
         /// <param name="visible">False if chrome must run silently</param>
         /// <param name="ignoreSetificateErrors"></param>
@@ -67,7 +78,7 @@ namespace My
             , string windowsUserName = "")
         {
             try
-            {  
+            {
                 //create instance
                 var service = ChromeDriverService.CreateDefaultService();
                 service.HideCommandPromptWindow = true;
@@ -81,7 +92,7 @@ namespace My
                     if (!visible)
                         options.AddArgument("headless");
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     throw new Exception("Can't set visibility. " + e.Message);
                 }
@@ -96,7 +107,7 @@ namespace My
                         options.AddArgument("user-data-dir=" + chromeProfilePath);
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     throw new Exception("Can't set chrome profile path.\nIt must look like:\n" + defaultProfilePath + "\n" + e.Message);
                 }
@@ -107,25 +118,29 @@ namespace My
                     if (ignoreSetificateErrors)
                         options.AddArgument("ignore-certificate-errors");
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     throw new Exception("Can't set ignore certificate errors. " + e.Message);
                 }
                 #endregion
                 //options.AddArgument("--window-position=-32000,-32000");
                 #endregion
-                //get chrome related processes before initialization
+                //get chrome related processes before initialization. Can throw error that access denied. Dealt away with running as administaror
                 var chromeRelatedIds = Process.GetProcesses()
                     .Where(s => _processesToCheck.FirstOrDefault(x => s.ProcessName.ToLower().Contains(x)) != null)
                     .ToList();
+                waitSmoothly(1.5);
                 //initialize chromedriver
                 var driverStartTime = Process.GetCurrentProcess().StartTime;
+
                 ChromeDriver chrome = new ChromeDriver(service, options);//cant instantize if onother cd exists for some reasons
-                //get chrome related processes after initialization
+                waitSmoothly(1.5);
+                //get chrome related processes after initialization. Can throw error that access denied. Dealt away with running as administaror
                 var latestChromeRelatedIds = Process.GetProcesses()
                     .Where(s => _processesToCheck.FirstOrDefault(x => s.ProcessName.ToLower().Contains(x)) != null
                     && s.StartTime > driverStartTime)
                     .ToList();
+                waitSmoothly(1.5);
                 //save newly created processes' ids to list
                 lastCreatedDriverIds = new List<string>();
                 latestChromeRelatedIds.ForEach(s =>
@@ -142,9 +157,9 @@ namespace My
                 File.AppendAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", lastCreatedDriverIds);
                 return lastHelper;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                throw new Exception(e.Message + "\nОтсутствует файл chromedriver.exe?");
+                throw new Exception(e.Message);
             }
         }
         public static void chromedriver_dispose(ChromeDriverHelper helper)
