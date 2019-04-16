@@ -131,30 +131,30 @@ namespace My
         #region (un)initialisation
 
         #region initialization fields
-        public Form owner;
         public bool initialized { get; private set; } = false;
+        Form _owner { get; set; }
         static Button pause_button = null;
         List<ThreadSeekerColorisationSetting> threadSeekerColorisationSettings = new List<ThreadSeekerColorisationSetting>();
         #endregion
 
-        public ThreadSeeker(ThreadSeekerColorisationSetting[] colorizationSettings, int ReshowDelaySec
-            , int dangerMemoryLoadMB, Graphics graphics, Form Owner,
-            bool ShowSleepingInfo = false, bool UnpauseIfIdle = false, bool pressRecalibrationAtStart = false)
+        public ThreadSeeker(ThreadSeekerColorisationSetting[] colorizationSettings, int reshowDelaySec
+            , int dangerMemoryLoadMB, Graphics graphics, Form owner,
+            bool showSleepingInfo = false, bool unpauseIfIdle = false, bool pressRecalibrationAtStart = false)
         {
             #region validation
             if (colorizationSettings == null || colorizationSettings.Contains(null))
                 throw new NullReferenceException("ColorizationSettings cannot be null");
-            if (reshowDelay <= 0 || dangerMemoryLoadMB <= 0)
+            if (_reshowDelay <= 0 || dangerMemoryLoadMB <= 0)
                 throw new IndexOutOfRangeException("No int can be qual or less that 0");
             if (graphics.HorizontalMargin < 0 || graphics.VerticalMargin < 0 || graphics.Width <= 0 || graphics.Height <= 0)
                 throw new ArgumentOutOfRangeException("No graphics int can be qual or less that 0");
-            if (Owner == null)
+            if (owner == null)
                 throw new ArgumentNullException("Owner can't be null");
             #endregion
             #region launch and initialisations
             threadSeekerColorisationSettings = colorizationSettings.ToList();
-            reshowDelay = ReshowDelaySec;
-            dangerMemoryMB = dangerMemoryLoadMB;
+            _reshowDelay = reshowDelaySec;
+            _dangerMemoryMB = dangerMemoryLoadMB;
             #region graphics
             int x = owner.Width - graphics.HorizontalMargin - graphics.Width;
             if (x <= 0) x = 0;
@@ -163,21 +163,21 @@ namespace My
             this.Location = new System.Drawing.Point(x, y);
             this.Size = new System.Drawing.Size(graphics.Width, graphics.Height);
             this.Anchor = graphics.Anchors;
-            owner = Owner; owner.Controls.Add(this);
+            _owner = owner; _owner.Controls.Add(this);
             InitializeComponent();
             this.Show();
             #endregion
             if (pressRecalibrationAtStart)
                 button5.PerformClick();
             if (colorizationSettings != null)
-            dangerMemoryMB = dangerMemoryLoadMB;
-            showSleepingInfo = ShowSleepingInfo;
-            launchIfIdle = UnpauseIfIdle;
-            start = DateTime.Now;
-            reshowDelay = ReshowDelaySec;
+            _dangerMemoryMB = dangerMemoryLoadMB;
+            ThreadSeeker.ShowSleepingInfo = showSleepingInfo;
+            _launchIfIdle = unpauseIfIdle;
+            _start = DateTime.Now;
+            _reshowDelay = reshowDelaySec;
             #endregion
             #region read things
-            threads = new List<List<Unit>>();
+            _threads = new List<List<Unit>>();
             #region read last settings
             try
             {
@@ -196,7 +196,7 @@ namespace My
                     for (int iter = 0; iter < paths.Length; iter++)
                     {
                         var oneDate = tryReadSelectedFile(paths[iter]);
-                        threads.Add(oneDate.ToList());
+                        _threads.Add(oneDate.ToList());
                         tslp.reshow_progress(iter);
                     }
                 }
@@ -204,16 +204,16 @@ namespace My
             #endregion
             #region if closed correctly             
             bool closedCorrectly = false;
-            for (int i = threads.Count - 1; i >= 0; i--)
+            for (int i = _threads.Count - 1; i >= 0; i--)
             {
-                for (int j = threads[i].Count - 1; j >= 0; j--)
+                for (int j = _threads[i].Count - 1; j >= 0; j--)
                 {
-                    if (threads[i][j].part.Contains("ThreadSeeker.closing"))
+                    if (_threads[i][j].part.Contains("ThreadSeeker.closing"))
                     {
                         closedCorrectly = true;
                         break;
                     }
-                    if (threads[i][j].part.Contains("ThreadSeeker.start"))
+                    if (_threads[i][j].part.Contains("ThreadSeeker.start"))
                         break;
                 }
             }
@@ -221,14 +221,14 @@ namespace My
             #endregion
             initialized = true;
             #region manage threads
-            try { thread_renew_data.Abort(); } catch { }
-            thread_renew_data = new Thread(renewData);
-            thread_renew_data.Name = "ThreadSeeker";
-            thread_renew_data.Start();
-            try { thread_renew_sleep.Abort(); } catch { }
-            thread_renew_sleep = new Thread(renewSleep);
-            thread_renew_sleep.Name = "SleepSeeker";
-            thread_renew_sleep.Start();
+            try { _threadRenewData.Abort(); } catch { }
+            _threadRenewData = new Thread(renewData);
+            _threadRenewData.Name = "ThreadSeeker";
+            _threadRenewData.Start();
+            try { _threadRenewSleep.Abort(); } catch { }
+            _threadRenewSleep = new Thread(renewSleep);
+            _threadRenewSleep.Name = "SleepSeeker";
+            _threadRenewSleep.Start();
             #endregion
             pause_button = button4;
             string part = "ThreadSeeker.start";
@@ -242,9 +242,9 @@ namespace My
         public void close()
         {
             addMessage("ThreadSeeker.closing", "Логгер закрыт", true, false, false);
-            closing = true;
-            try { thread_renew_data.Abort(); } catch { }
-            try { thread_renew_sleep.Abort(); } catch { }
+            _closing = true;
+            try { _threadRenewData.Abort(); } catch { }
+            try { _threadRenewSleep.Abort(); } catch { }
             Dispose(true);
         }
         ~ThreadSeeker()
@@ -340,29 +340,29 @@ namespace My
 
         #region fields
                     
-        public static bool showSleepingInfo { get; private set; } = false;
+        public static bool ShowSleepingInfo { get; set; } = false;
         /// <summary>
         /// it will be shown in bottom line
         /// </summary>
-        public static string currentActivity = "";
-        public static TimeSpan sleptTime = new TimeSpan();
+        static string _currentActivity { get; set; } = "";
+        static TimeSpan _sleptTime { get; set; } = new TimeSpan();
         
 
-        static DateTime start = DateTime.Now;
-        static int dangerMemoryMB = 750;
-        static bool launchIfIdle = false;
-        static bool somethingChanged = false;
-        static List<Process> additional_processes_to_consider = new List<Process>();
+        static DateTime _start = DateTime.Now;
+        static int _dangerMemoryMB = 750;
+        static bool _launchIfIdle = false;
+        static bool _somethingChanged = false;
+        static List<Process> _additionalProcessesToConsider = new List<Process>();
 
-        static List<List<Unit>> threads = new List<List<Unit>>();
+        static List<List<Unit>> _threads = new List<List<Unit>>();
 
-        static bool showDetailedInfo = false;
-        static bool showImportantOnly = false;
-        static int reshowDelay = 15;
-        static bool closing = false;
+        static bool _showDetailedInfo = false;
+        static bool _showImportantOnly = false;
+        static int _reshowDelay = 15;
+        static bool _closing = false;
 
-        Thread thread_renew_data;
-        Thread thread_renew_sleep;
+        Thread _threadRenewData;
+        Thread _threadRenewSleep;
 
         #region delegates
         delegate void voidstringstringbool(string s1, string s2, bool b, bool system, bool isCurrentActivity);
@@ -420,12 +420,12 @@ namespace My
             try
             {
                 if (isCurrentActivity)
-                    currentActivity = programPart + "." + message;
+                    _currentActivity = programPart + "." + message;
                 #region getDiagnostics = memory and cpu
                 Process p = Process.GetCurrentProcess();                
                 float fcpu = Diagnostics.get_cpu_percent_usage(p);
                 long memory = Diagnostics.get_memory_mb_usage(p);
-                foreach (var v in additional_processes_to_consider)
+                foreach (var v in _additionalProcessesToConsider)
                     try
                     {
                         int addfCPU = Diagnostics.get_cpu_percent_usage(v);
@@ -442,8 +442,8 @@ namespace My
 
                 appendLineToFile(message_to_write);
                 find_and_add_thread_to_right_date_list(unit);
-                if (!system || (system && showDetailedInfo))
-                    somethingChanged = true;
+                if (!system || (system && _showDetailedInfo))
+                    _somethingChanged = true;
             }
             catch
             {
@@ -461,23 +461,23 @@ namespace My
         }
         static void find_and_add_thread_to_right_date_list(Unit unit)
         {
-            foreach (var v in threads)
+            foreach (var v in _threads)
                 try
                 {
                     if (v[0].dateTime.Date == unit.dateTime.Date)
                     {
                         v.Add(unit);
                         if (!unit.is_system_message)
-                            somethingChanged = true;
+                            _somethingChanged = true;
                         return;
                     }
                 }
                 catch { }
             List<Unit> n = new List<Unit>();
             n.Add(unit);
-            threads.Add(n);
+            _threads.Add(n);
             if (!unit.is_system_message)
-                somethingChanged = true;
+                _somethingChanged = true;
         }
         static void appendLineToFile(string message)
         {
@@ -497,13 +497,13 @@ namespace My
         #region add and remove process to consider
         public static void try_add_process_to_consider(Process p)
         {
-            if (p != null && !additional_processes_to_consider.Contains(p))
-                additional_processes_to_consider.Add(p);
+            if (p != null && !_additionalProcessesToConsider.Contains(p))
+                _additionalProcessesToConsider.Add(p);
         }
         public static void try_remove_process_to_consider(Process p)
         {
             if (p != null)
-                additional_processes_to_consider.Remove(p);
+                _additionalProcessesToConsider.Remove(p);
         }
         #endregion
         
@@ -516,13 +516,13 @@ namespace My
             //threads.Clear();
             string initialText = groupBox1.Text;
             listView1.Items.Add("Подготовка логов. Стоит ограничить временной диапазон, если долго.");
-            while (!closing)
+            while (!_closing)
                 try
                 {
-                    somethingChanged = false;
+                    _somethingChanged = false;
                     #region exhibition   
-                    if (closing) return;      
-                    if (threads.Count == 0)
+                    if (_closing) return;      
+                    if (_threads.Count == 0)
                     { sleep(); continue; }
                     int howMuch = listView1.Size.Height / 16;  //appr. 18 units Y for one line                     
                     if (howMuch == 0)
@@ -543,15 +543,15 @@ namespace My
                     {
                         DateTime mindt = DateAndTime.convertStringToDateTime(Stb.Text, false);
                         DateTime maxdt = DateAndTime.convertStringToDateTime(POtb.Text, false);
-                        for (int i = threads.Count - 1; i >= 0; i--)
+                        for (int i = _threads.Count - 1; i >= 0; i--)
                             try
                             {
-                                if (closing) break;
-                                if (threads[i][0].dateTime.Date > mindt && threads[i][0].dateTime.Date < maxdt)
+                                if (_closing) break;
+                                if (_threads[i][0].dateTime.Date > mindt && _threads[i][0].dateTime.Date < maxdt)
                                 {
                                     var reversed = new List<Unit>();
-                                    for (int j = threads[i].Count - 1; j >= 0; j--)
-                                        reversed.Add(threads[i][j]);
+                                    for (int j = _threads[i].Count - 1; j >= 0; j--)
+                                        reversed.Add(_threads[i][j]);
                                     seldates.AddRange(reversed);
                                 }
                             }
@@ -560,7 +560,7 @@ namespace My
                     catch
                     {
                         seldates.Clear();
-                        foreach (var v in threads)
+                        foreach (var v in _threads)
                             seldates.AddRange(v);
                     }
                     #endregion
@@ -574,7 +574,7 @@ namespace My
                     for (int a = 0; a < seldates.Count; a++)
                         try
                         {
-                            if (somethingChanged || closing) break;
+                            if (_somethingChanged || _closing) break;
                             if (a % 100 == 0) groupBox1.Text = txt + ".Обработка " + a + " сообщений.";
                             if (checking(seldates[a], requests, antirequests))
                             {
@@ -591,7 +591,7 @@ namespace My
                     #region fillList
                     for (int a = 0; a < res.Count; a++)
                     {
-                        if (somethingChanged || closing) break;
+                        if (_somethingChanged || _closing) break;
                         try { listView1.Items.Add(res[a]); } catch { continue; }
                         #region colorise
                         var elem = listView1.Items[listView1.Items.Count - 1];
@@ -627,9 +627,9 @@ namespace My
         }
         bool checking(Unit unit, string[] requests, string[] antirequests)
         {
-            if (!showDetailedInfo && unit.is_system_message)
+            if (!_showDetailedInfo && unit.is_system_message)
                 return false;
-            if (showImportantOnly && !unit.is_important)
+            if (_showImportantOnly && !unit.is_important)
                 return false;
             try
             {
@@ -671,34 +671,34 @@ namespace My
 
         void renewSleep()
         {
-            while (!closing)
+            while (!_closing)
                 try
                 {
-                    textBox3.Text = currentActivity;
-                    if (showSleepingInfo && sleptTime.TotalSeconds >= 1)
+                    textBox3.Text = _currentActivity;
+                    if (ShowSleepingInfo && _sleptTime.TotalSeconds >= 1)
                     {
-                        string sleepstring = "(сон " + DateAndTime.convertTimeSpanToString(sleptTime) + ")";
+                        string sleepstring = "(сон " + DateAndTime.convertTimeSpanToString(_sleptTime) + ")";
                         if (textBox3.Text.Contains("(сон"))
                             textBox3.Text = textBox3.Text.Remove(textBox3.Text.IndexOf("(сон"));
                         textBox3.Text += sleepstring;
                     }
-                    if (launchIfIdle)
+                    if (_launchIfIdle)
                     {
                         var idle = Diagnostics.getIdleTime();
                         if (idle > new TimeSpan(1, 30, 0))
                             pause = false;
                     }
-                    if (closing) return;
+                    if (_closing) return;
                     Thread.Sleep(1000);
                 }
                 catch { return; }
         }       
         void sleep()
         {
-            for (int i = 0; i < reshowDelay; i++)
+            for (int i = 0; i < _reshowDelay; i++)
             {
                 Thread.Sleep(1000);        
-                    if (somethingChanged || closing)
+                    if (_somethingChanged || _closing)
                         return;     
             }
         }
@@ -714,15 +714,15 @@ namespace My
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
-            showImportantOnly = checkBox1.Checked;
-            somethingChanged = true;
+            _showImportantOnly = checkBox1.Checked;
+            _somethingChanged = true;
         }
 
         private void save_settings(object sender, EventArgs e)
         {
             try
             {
-                somethingChanged = true;
+                _somethingChanged = true;
                 string path = Directory.GetCurrentDirectory() + "\\ThreadSeeker.txt";
                 string from = Stb.Text;
                 string to = POtb.Text;
@@ -734,7 +734,7 @@ namespace My
         private void button5_Click(object sender, EventArgs e)
         {
             recalibrateTimeFrame();
-            somethingChanged = true;
+            _somethingChanged = true;
         }
         public void recalibrateTimeFrame()
         {
@@ -799,7 +799,7 @@ namespace My
         private void button3_Click(object sender, EventArgs e)
         {
             addMessage(textBox1.Text, "ThreadSeeker.manually", true, false, false);
-            _somethingChanged(sender, e);
+            somethingChanged(sender, e);
         }
         
         private void textBox3_KeyPress(object sender, KeyPressEventArgs e)
@@ -833,15 +833,15 @@ namespace My
             }
         }
 
-        void _somethingChanged(object sender, EventArgs e)
+        void somethingChanged(object sender, EventArgs e)
         {
-            somethingChanged = true;
+            _somethingChanged = true;
         }
 
         private void checkBox3_CheckedChanged(object sender, EventArgs e)
         {
-            showDetailedInfo = checkBox3.Checked;
-            somethingChanged = true;
+            _showDetailedInfo = checkBox3.Checked;
+            _somethingChanged = true;
         }
 
         /// <summary>
@@ -867,7 +867,7 @@ namespace My
         }
         private void numericUpDown1_ValueChanged(object sender, EventArgs e)
         {
-            somethingChanged = true;
+            _somethingChanged = true;
         }
 
 

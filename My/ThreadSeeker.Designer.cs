@@ -100,7 +100,7 @@
             this.toolTip1.SetToolTip(this.textBox1, "Показывать только сообщения \r\nсо словами(через &&) без учета регистра:\r\n\r\nМожно з" +
         "аменить неизвестный знак звездочкой\r\nПример:  под \"к*ка\" попадают \"кОШка\", \"кИШк" +
         "а\" и \"кУКУШка\"");
-            this.textBox1.TextChanged += new System.EventHandler(this._somethingChanged);
+            this.textBox1.TextChanged += new System.EventHandler(this.somethingChanged);
             // 
             // toolTip1
             // 
@@ -131,7 +131,7 @@
             this.toolTip1.SetToolTip(this.textBox2, "Показывать только сообщения\r\nбез слов(через &&) без учета регистра:\r\n\r\nМожно заме" +
         "нить неизвестные знаки звездочкой\r\nПример:  под \"к*ка\" попадают \"кОШка\", \"кИШка\"" +
         " и \"кУКУШка\"");
-            this.textBox2.TextChanged += new System.EventHandler(this._somethingChanged);
+            this.textBox2.TextChanged += new System.EventHandler(this.somethingChanged);
             // 
             // button5
             // 
