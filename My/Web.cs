@@ -294,6 +294,36 @@ namespace My
                 return null;
         }
 
+        /// <summary>
+        /// At least 1 parameter must not be empty. Serches by Id first, then by tag, then by text. In the last case it returns the first occurence
+        /// </summary>
+        /// <param name="chrome"></param>
+        /// <param name="text"></param>
+        /// <param name="tag"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public static IWebElement FindFirstOrDefaultElement(ChromeDriver chrome, string text = "", string tag = "", string id = "")
+        {
+            if (id != "")
+            {
+                return chrome.FindElementById(id);
+            }
+            if (tag != "")
+            {
+                var elems = chrome.FindElements(By.TagName(tag));
+                if (text != "")
+                    return elems.FirstOrDefault(s => s.Text == text || s.Text.Trim() == text);
+                else
+                    return elems.FirstOrDefault();
+            }
+            var texts = chrome.FindElementsByXPath(string.Format("//*[contains(text(), '{0}')]", text));
+            var firstText = texts.FirstOrDefault();
+            if (firstText != null)
+                return firstText;
+            else
+                return null;
+        }
+
         #region NavigateChrome(smooth chrome navigation)
 
         #region last chrome 
@@ -418,21 +448,23 @@ namespace My
             #endregion
             try
             {
-                int noInternetTimes = 0;
-                int connectionResetTimes = 0;
-                int mainFrameErrorTimes = 0;
+                //toleratable errors counters
+                int noInternetTimes = 0, connectionResetTimes = 0, mainFrameErrorTimes = 0, tooLongToRespondTimes = 0;
                 for (int i = 0; i < tryouts; i++)
                 {
+                    #region tryout logic = navigation + checking for stop, taleratable errors, and exceptional errors
                     cd.Url = url;
                     waitSmoothly(delaySeconds, ref stop);
                     if (stop) return false;
 
                     isExceptionalError(cd.PageSource, cd.Url);
-                    if (isContinuableError(cd, ref noInternetTimes, ref connectionResetTimes, ref mainFrameErrorTimes))
+                    if (isContinuableError(cd, ref noInternetTimes, ref connectionResetTimes, ref mainFrameErrorTimes, ref tooLongToRespondTimes))
                         continue;
+                    #endregion
                     //if no errors
                     return true;
                 }
+                #region build and throw Exception message, since I failed to download the page thrice
                 string message = "No connection after " + tryouts + " tryouts";
                 if (noInternetTimes > 0)
                     message += "\nNo internet connection times " + noInternetTimes;
@@ -441,7 +473,7 @@ namespace My
                 if (mainFrameErrorTimes > 0)
                     message += "\nCommon error times " + mainFrameErrorTimes;
                 throw new Exception(message);
-
+                #endregion
             }
             catch (Exception e)
             {
@@ -449,7 +481,7 @@ namespace My
             }
         }//main function with stop parameter
 
-        static bool isContinuableError(ChromeDriver cd, ref int noInternetTimes, ref int connectionResetTimes, ref int mainFrameErrorTimes)
+        static bool isContinuableError(ChromeDriver cd, ref int noInternetTimes, ref int connectionResetTimes, ref int mainFrameErrorTimes, ref int tooLongToRespond)
         {
             if (cd.PageSource.Contains("No internet"))
             {
@@ -461,6 +493,13 @@ namespace My
                 connectionResetTimes++;
                 return true;
             }
+            if (cd.PageSource.Contains("took too long to respond."))
+            {
+                tooLongToRespond++;
+                return true;
+            }
+
+
             try
             {
                 var mfe = FindLastOrDefaultElement(cd, "", "div", "main-frame-error");
