@@ -359,7 +359,21 @@ namespace My
             double rand = new Random().Next(minDelaySeconds, maxDelaySeconds);
             return NavigateChrome(cd, url, rand, tryouts);
         }
+        #endregion
 
+        /// <summary>
+        /// Smooth chrome navigation.
+        /// </summary>
+        /// <param name="cd"></param>
+        /// <param name="url"></param>
+        /// <param name="delaySeconds"></param>
+        /// <param name="tryouts"></param>
+        /// <returns></returns>
+        public static bool NavigateChrome(ChromeDriver cd, string url, double delaySeconds, int tryouts = 3)
+        {
+            bool placeHolder = false;
+            return NavigateChrome(cd, url, delaySeconds, ref placeHolder, tryouts);
+        }//main function without stop parameter
 
         /// <summary>
         /// Smooth chrome navigation. Can be stopped.
@@ -367,6 +381,7 @@ namespace My
         /// <param name="cd"></param>
         /// <param name="url"></param>
         /// <param name="delay"></param>
+        /// <param name="stop"></param>
         /// <param name="tryouts"></param>
         /// <returns></returns>
         public static bool NavigateChrome(ChromeDriver cd, string url, double delaySeconds, ref bool stop, int tryouts = 3)
@@ -381,21 +396,31 @@ namespace My
             #endregion
             try
             {
-                bool done = false;
+                int noInternetTimes = 0;
+                int connectionResetTimes = 0;
                 for (int i = 0; i < tryouts; i++)
                 {
                     cd.Url = url;
                     waitSmoothly(delaySeconds, ref stop);
-                    if (!cd.PageSource.Contains("No internet"))
+                    if (stop) return false;
+                    if (cd.PageSource.Contains("No internet"))
                     {
-                        done = true;
-                        break;
+                        noInternetTimes++;
+                        continue;
                     }
-                }
-                if (done)
+                    if (cd.PageSource.Contains("The connection was reset."))
+                    {
+                        connectionResetTimes++;
+                        continue;
+                    }
                     return true;
-                else
-                    throw new Exception("No internet connection after " + tryouts + " tryouts");
+                }
+                string message = "No internet connection after " + tryouts + " tryouts";
+                if (noInternetTimes > 0)
+                    message += "\nNo internet connection " + noInternetTimes;
+                if (connectionResetTimes > 0)
+                    message += "\nConnection reset times " + connectionResetTimes;
+                throw new Exception(message);
 
             }
             catch (Exception e)
@@ -403,51 +428,7 @@ namespace My
                 throw new Exception("Cannot navigate chrome: " + e.Message);
             }
         }//main function with stop parameter
-
-        /// <summary>
-        /// Smooth chrome navigation
-        /// </summary>
-        /// <param name="cd"></param>
-        /// <param name="url"></param>
-        /// <param name="delay"></param>
-        /// <param name="tryouts"></param>
-        /// <returns></returns>
-        public static bool NavigateChrome(ChromeDriver cd, string url, double delaySeconds, int tryouts = 3)
-        {
-            #region check arguments
-            if (cd == null)
-                throw new ArgumentNullException("Chrome is null");
-            if (string.IsNullOrEmpty(url))
-                throw new ArgumentNullException("URL is null or empty");
-            if (delaySeconds <= 0 || tryouts <= 0)
-                throw new ArgumentOutOfRangeException("Delay and tryouts cannot be less or equal 0");
-            #endregion
-            try
-            {
-                bool done = false;
-                for (int i = 0; i < tryouts; i++)
-                {
-                    cd.Url = url;
-                    waitSmoothly(delaySeconds);
-                    if (!cd.PageSource.Contains("No internet"))
-                    {
-                        done = true;
-                        break;
-                    }
-                }
-                if (done)
-                    return true;
-                else
-                    throw new Exception("No internet connection after " + tryouts + " tryouts");
-
-            }
-            catch (Exception e)
-            {
-                throw new Exception("Cannot navigate chrome: " + e.Message);
-            }
-        }//main function
-        #endregion
-
+        
         #endregion
 
         #endregion
