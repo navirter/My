@@ -419,19 +419,23 @@ namespace My
         {
             public static void Done(string particularPart)
             {
-                ThreadSeeker.addMessage("done", particularPart, false, true);
+                ThreadSeeker.addMessage( particularPart, "done", false, true);
             }
             public static void Fail(string particularPart, string failMessage = "")
             {
-                ThreadSeeker.addMessage("fail. " + failMessage, particularPart, true, true);
+                ThreadSeeker.addMessage( particularPart, "fail. " + failMessage, true, true);
             }
             public static void Start(string particularPart)
             {
-                ThreadSeeker.addMessage("start", particularPart, false, true);
+                ThreadSeeker.addMessage(particularPart, "start", false, true);
             }
             public static void NotNeeded(string particularPart)
             {
-                ThreadSeeker.addMessage("not needed", particularPart, false, true);
+                ThreadSeeker.addMessage( particularPart, "not needed", false, true);
+            }
+            public static void Cancel(string particularPart)
+            {
+                ThreadSeeker.addMessage(particularPart, "cancel", false, false, true);
             }
         }
         #endregion
