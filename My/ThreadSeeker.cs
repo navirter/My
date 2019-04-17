@@ -437,6 +437,10 @@ namespace My
             {
                 ThreadSeeker.addMessage(particularPart, "cancel", false, false, true);
             }
+            public static void Stop(string particularPart)
+            {
+                ThreadSeeker.addMessage(particularPart, "stop", false, false, true);
+            }
         }
         #endregion
 
