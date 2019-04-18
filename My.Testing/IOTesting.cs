@@ -112,7 +112,75 @@ namespace My.Testing
             }
         }
 
+        [TestClass()]
+        public class StringClass
+        {
+            public string x;
+            public override bool Equals(object obj)
+            {               
+                return EqualChecker.NonIEnumerableValuesEquals(this, obj);
+            }
+        }
 
+        [TestMethod()]
+        public void WriteAndReadProblematicSigns()
+        {
+            try
+            {
+                StringClass s = new StringClass() { x = "<>&" };
+                StringClass res = IO.WriteToXmlFile(IO.CurrentDirectoryFolder + "\\tests\\WriteToXmlFileTesting.xml", s);
+                Assert.AreEqual(s, res);
+            }
+            catch(Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+        }
+
+
+        [TestClass()]
+        public class TimeSpanClass
+        {
+            public TimeSpan x = new TimeSpan();
+        }
+
+        [TestMethod()]
+        public void WriteAndRead_TimeSpan()
+        {
+            try
+            {
+                TimeSpanClass s = new TimeSpanClass();
+                IO.WriteToXmlFile(IO.CurrentDirectoryFolder + "\\tests\\WriteToXmlFileTesting.xml", s);
+                Assert.Fail();
+            }
+            catch
+            {
+                Assert.AreEqual(true, true);
+            }
+        }
+
+
+        [TestClass()]
+        public class LinkedListClass
+        {
+            public LinkedList<string> s = new LinkedList<string>();
+        }
+
+        [TestMethod()]
+        public void WriteAndRead_LinkedList()
+        {
+            try
+            {
+                LinkedListClass s = new LinkedListClass();
+                s.s.AddFirst("");
+                IO.WriteToXmlFile(IO.CurrentDirectoryFolder + "\\tests\\WriteToXmlFileTesting.xml", s);
+                Assert.Fail();
+            }
+            catch
+            {
+                Assert.AreEqual(true, true);
+            }
+        }
 
         #endregion
     }

@@ -101,5 +101,35 @@ namespace My.Testing
             bool match = d.name == res.name && d.age == res.age && d.sex == res.sex;
             Assert.IsTrue(match);
         }
+        
+        [TestMethod()]
+        public void copyFieldsTesting_BrakeReference()
+        {
+            try
+            {
+                Dude d = new Dude();
+                Dude res = new Dude();
+                Copier.copyFields(d, res);
+                d.age = res.age + 1;
+                Assert.AreNotEqual(d.age, res.age);
+            }
+            catch(Exception e)
+            { Assert.Fail(e.Message); }
+        }
+
+        [TestMethod()]
+        public void copyFieldsTesting_BrakeReferenceInList()
+        {
+            try
+            {
+                List<Dude> dudes = new List<Dude>() { new Dude() };
+                List<Dude> res = new List<Dude>();
+                Copier.copyFields(dudes, res);
+                dudes[0].age = res[0].age + 1;
+                Assert.AreNotEqual(dudes[0].age, res[0].age);
+            }
+            catch (Exception e)
+            { Assert.Fail(e.Message); }
+        }
     }
 }

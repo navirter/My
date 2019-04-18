@@ -64,6 +64,7 @@
     <Compile Include="Copier.cs" />
     <Compile Include="DateAndTime.cs" />
     <Compile Include="Diagnostics.cs" />
+    <Compile Include="EqualChecker.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="IO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
