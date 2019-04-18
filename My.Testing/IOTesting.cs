@@ -33,7 +33,7 @@ namespace My.Testing
             try
             {
                 Wrapper1 wp = new Wrapper1() { s = "wat&^*()^%$#@" };
-                Wrapper1 new_wp = IO.WriteToXmlFile(IO.CurrentDirectory + "\\tests\\WriteToXmlFileTesting.xml", wp);
+                Wrapper1 new_wp = IO.WriteToXmlFile(IO.CurrentDirectoryFolder + "\\tests\\WriteToXmlFileTesting.xml", wp);
                 Assert.AreEqual(wp.s, new_wp.s);
             }
             catch (Exception e)
@@ -47,7 +47,7 @@ namespace My.Testing
             try
             {
                 Wrapper1 wp = new Wrapper1() { s = "&" };
-                Wrapper1 res = IO.WriteToXmlFile(IO.CurrentDirectory + "\\tests\\ReadDollar.xml", wp);
+                Wrapper1 res = IO.WriteToXmlFile(IO.CurrentDirectoryFolder + "\\tests\\ReadDollar.xml", wp);
                 Assert.AreEqual(wp, res);
             }
             catch (Exception e)
@@ -103,7 +103,7 @@ namespace My.Testing
             try
             {
                 Wrapper2 wp = new Wrapper2();
-                Wrapper2 new_wp = IO.WriteToXmlFile(IO.CurrentDirectory + "\\tests\\WriteToXmlFileTesting.xml", wp);
+                Wrapper2 new_wp = IO.WriteToXmlFile(IO.CurrentDirectoryFolder + "\\tests\\WriteToXmlFileTesting.xml", wp);
                 Assert.IsTrue(wp.Equals(new_wp));
             }
             catch (Exception e)

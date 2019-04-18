@@ -29,40 +29,73 @@ namespace My
             new CharacterPair(">", "&gt;"), 
             new CharacterPair("＆", "&amp;")
         };
-        /// <summary>
-        /// Must be called before and reversily after the serialization for each element of an string enumeration.
-        /// If they contain '&', '<' or '>'
-        /// </summary>
-        /// <param name="source"></param>
-        /// <param name="reverse"></param>
-        /// <returns></returns>
-        public static string ReplaceWeirdCharactersForSerialization(this string source, bool reverse = false)
+
+
+        #region formateAllStringFieldsForSerialisation
+        static void formateAllStringFieldsForSerialisation<T>(this T original, bool reverse = false)
         {
-            string res = source;
+            Type type = original.GetType();
+            FieldInfo[] fields = type.GetFields().Where(s => s.IsPublic).ToArray();
+            FieldInfo[] strings = fields.Where(s => s.FieldType.Name == "String").ToArray();
+            for (int i = 0; i < strings.Length; i++)
+                setProperString(strings[i], original, reverse);
+
+            var stringEnumsFields = fields.Where(a => a.GetType()
+                .GetInterfaces().Any(s =>
+            s.IsGenericType && s.GetGenericTypeDefinition() == typeof(IEnumerable<string>)));
+            foreach (var v in stringEnumsFields)
+                setProperString(v, original, reverse);
+        }
+        static void setProperString<T>(FieldInfo stringField, T original, bool reverse)
+        {
+            string value = (string)stringField.GetValue(original);
+            string modified = value;
             foreach (var v in charactersToReplace)
                 if (!reverse)
-                    res = res.Replace(v.invalid, v.valid);
+                    modified = modified.Replace(v.invalid, v.valid);
                 else
-                    res = res.Replace(v.valid, v.invalid);
-            return res;
+                    modified = modified.Replace(v.valid, v.invalid);
+            if (modified != value)
+                stringField.SetValue(original, modified);
         }
+        #endregion
+
+        #region ReplaceWeirdCharactersForSerialization obsolete
+        ///// <summary>
+        ///// Must be called before and reversily after the serialization for each element of an string enumeration.
+        ///// If they contain on of these characters: $><
+        ///// </summary>
+        ///// <param name="source"></param>
+        ///// <param name="reverse"></param>
+        ///// <returns></returns>                 
+        //public static string ReplaceWeirdCharactersForSerialization(this string source, bool reverse = false)
+        //{
+        //    string res = source;
+        //    foreach (var v in charactersToReplace)
+        //        if (!reverse)
+        //            res = res.Replace(v.invalid, v.valid);
+        //        else
+        //            res = res.Replace(v.valid, v.invalid);
+        //    return res;
+        //}
+        #endregion
+
+        #region writeToXmlFile
         /// <summary>
         /// Writes the given object instance to an XML file creating all necessary folders.
-        /// It FAILS at writing a TimeSpan instance. Even when they are a field.    
+        /// It FAILS at writing a TimeSpan or LinkedList instance. Even when they are a field.    
         /// It returns a read instance of what's been written        
-        /// If a DataStructure is saved, all it's strings must NOT contain chars '&', '<', '>'
-        /// A string extension method ReplaceWeirdCharactersForSerialization can be called then.
-        /// <para>Only Public properties and variables will be written to the file. These can be any type though, even other classes.</para>
-        /// <para>If there are public properties/variables that you do not want written to the file, decorate them with the [XmlIgnore] attribute.</para>
-        /// <para>Object type must have a parameterless constructor.</para>            /// 
+        /// Only Public properties and variables will be written to the file.
+        /// If there are public properties/variables that you do not want written to the file, decorate them with the [XmlIgnore] attribute.
+        /// Object type must have a parameterless constructor.
         /// </summary>
         /// <typeparam name="T">The type of object being written to the file.</typeparam>
         /// <param name="filePath">The file path to write the object instance to.</param>
         /// <param name="objectToWrite">The object instance to write to the file.</param>
         /// <param name="append">If false the file will be overwritten if it already exists. If true the contents will be appended to the file.</param>        
         public static T WriteToXmlFile<T>(string filePath, T objectToWrite, bool append = false) where T : new()
-        {//cant filter list's strings
-            /*
+        {            
+         /*
 The ampersand character (&) and the left angle bracket (<) must not appear in their literal form, 
 except when used as markup delimiters, or within a comment, a processing instruction, or a CDATA section.
 If they are needed elsewhere, they must be escaped using either numeric character references or the strings 
@@ -80,7 +113,8 @@ not including the CDATA-section-close delimiter, " ]]> ".
 To allow attribute values to contain both single and double quotes,
 the apostrophe or single-quote character (') may be represented as " &apos; "
 , and the double-quote character (") as " &quot; ".
-             */
+          */
+            validation(objectToWrite);
             TextWriter writer = null;
             try
             {
@@ -107,25 +141,36 @@ the apostrophe or single-quote character (') may be represented as " &apos; "
             }
             return ReadFromXmlFile<T>(filePath);//this is needed to ensure the file is readable
         }
-        
-        static void formateAllStringFieldsForSerialisation<T>(this T original, bool reverse = false)
-        {           
+
+        static void validation<T>(this T original)
+        {
             Type type = original.GetType();
             FieldInfo[] fields = type.GetFields().Where(s => s.IsPublic).ToArray();
-            FieldInfo[] strings = fields.Where(s => s.FieldType.Name == "String").ToArray();
-            for (int i = 0; i < strings.Length; i++)
+            foreach (var f in fields)
             {
-                string value = (string)strings[i].GetValue(original);
-                string modified = value;
-                foreach (var v in charactersToReplace)
-                    if (!reverse)
-                        modified = modified.Replace(v.invalid, v.valid);
-                    else
-                        modified = modified.Replace(v.valid, v.invalid);
-                if (modified != value)
-                    strings[i].SetValue(original, modified);
+                string name = f.FieldType.Name;
+                if (name == "TimeSpan" || name == "LinkedList")
+                {
+                    throw new UnsupportedFieldTypeException("Cannot use XML Serialization for type of " + name);
+                }
             }
         }
+        #region UnsupportedFieldTypeException
+        /// <summary>
+        /// Raises when an unsopported for Xml Serizlization field type is about to be serialized
+        /// </summary>
+        public class UnsupportedFieldTypeException : Exception
+        {
+            /// <summary>
+            /// Raises when an unsopported for Xml Serizlization field type is about to be serialized
+            /// </summary>
+            public UnsupportedFieldTypeException(string message)
+            {
+
+            }
+        }
+        #endregion
+
 
         static string serializeObject<T>(T toSerialize)
         {
@@ -137,7 +182,9 @@ the apostrophe or single-quote character (') may be represented as " &apos; "
                 return textWriter.ToString();
             }
         }
+        #endregion
 
+        #region readFromXmlFile
         /// <summary>
         /// Reads an object instance from an XML file.
         /// <para>Object type must have a parameterless constructor.</para>
@@ -165,8 +212,9 @@ the apostrophe or single-quote character (') may be represented as " &apos; "
                     reader.Close();
             }
         }
+        #endregion
 
-        public static string CurrentDirectory { get; private set; } = Directory.GetCurrentDirectory();
-        public static string ApplicationData { get; private set; } = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);        
+        public static string CurrentDirectoryFolder { get { return Directory.GetCurrentDirectory(); } }
+        public static string ApplicationDataFolder { get { return Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData); } }
     }
 }
