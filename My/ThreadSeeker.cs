@@ -628,8 +628,10 @@ namespace My
                                 {
                                     if (checkBox2.Checked)
                                     {
-                                        if (!seldates[a].part.EndsWith(".start"))//remove task starts
+                                        if (!seldates[a].part.EndsWith(".start") && !seldates[a].part.EndsWith(".closing"))
+                                        {
                                             res.Add(seldates[a].ToStringShort());
+                                        }
                                     }
                                     else
                                         res.Add(seldates[a].ToString());

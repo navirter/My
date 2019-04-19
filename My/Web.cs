@@ -188,9 +188,9 @@ namespace My
         static int linesCounter = 0;
         static int linesCount = 0;
         delegate void voidProcessInt(Process process, int integer);
-        public static void chromedriver_disposeAll(int maximumTimeoutSeconds = 10)
-        {
 
+        public static void chromedriver_disposeAllAsync(int maximumTimeoutSeconds = 10)
+        {
             string path = Directory.GetCurrentDirectory() + "\\drivers.txt";
             string[] lines = File.ReadAllLines(path);
             linesCount = lines.Length; linesCounter = 0;
@@ -209,12 +209,21 @@ namespace My
                 catch
                 {
                 }
+            Thread finisher = new Thread(awaitThings);
+            finisher.Start(maximumTimeoutSeconds);
+        }
+        static void awaitThings(object intSeconds)
+        {
+            if (intSeconds is int == false)
+                return;
+            int seconds = (int)intSeconds;
+
             var now = DateTime.Now;
             while (linesCounter != linesCount)
             {
                 Application.DoEvents();
                 Thread.Sleep(100);
-                if (DateTime.Now - now > TimeSpan.FromSeconds(maximumTimeoutSeconds))
+                if (DateTime.Now - now > TimeSpan.FromSeconds(seconds))
                     break;
             }
             LastChromeDriverHelper = null;
