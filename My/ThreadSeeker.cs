@@ -13,6 +13,7 @@ using System.Xml.Serialization;
 using System.Runtime.InteropServices;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.ComponentModel.DataAnnotations;
 
 
 namespace My
@@ -47,10 +48,13 @@ namespace My
         {
             public int HorizontalMargin = 0;
             public int VerticalMargin = 0;
+            [Range(350, 50000)]
             public int Width = 0;
+            [Range(600, 50000)]
             public int Height = 0;
             public AnchorStyles Anchors;
             public Side Side;
+
 
             public Graphics(int horizontalMargin, int verticalMargin, int Width, int Height, AnchorStyles anchors, Side side)
             {
@@ -263,10 +267,10 @@ namespace My
             _threadRenewData = new Thread(renewData);
             _threadRenewData.Name = "ThreadSeeker";
             _threadRenewData.Start();
-            try { _threadRenewSleep.Abort(); } catch { }
-            _threadRenewSleep = new Thread(renewSleep);
-            _threadRenewSleep.Name = "SleepSeeker";
-            _threadRenewSleep.Start();
+            try { _threadRenewSleepAndCurrentActivity.Abort(); } catch { }
+            _threadRenewSleepAndCurrentActivity = new Thread(renewSleepAndCurrentActivity);
+            _threadRenewSleepAndCurrentActivity.Name = "SleepSeeker";
+            _threadRenewSleepAndCurrentActivity.Start();
             #endregion
             pause_button = button4;
             string part = "ThreadSeeker.start";
@@ -282,7 +286,7 @@ namespace My
             addMessage("ThreadSeeker.closing", "Логгер закрыт", true, false, false);
             _closing = true;
             try { _threadRenewData.Abort(); } catch { }
-            try { _threadRenewSleep.Abort(); } catch { }
+            try { _threadRenewSleepAndCurrentActivity.Abort(); } catch { }
             Dispose(true);
         }
         ~ThreadSeeker()
@@ -382,7 +386,7 @@ namespace My
         /// <summary>
         /// it will be shown in bottom line
         /// </summary>
-        static string _currentActivity { get; set; } = "";
+        public static string CurrentActivity { get; set; } = "";
         static TimeSpan _sleptTime { get; set; } = new TimeSpan();
         
 
@@ -400,7 +404,7 @@ namespace My
         static bool _closing = false;
 
         Thread _threadRenewData;
-        Thread _threadRenewSleep;
+        Thread _threadRenewSleepAndCurrentActivity;
 
         #region delegates
         delegate void voidstringstringbool(string s1, string s2, bool b, bool system, bool isCurrentActivity);
@@ -466,7 +470,7 @@ namespace My
             try
             {
                 if (isCurrentActivity)
-                    _currentActivity = programPart + "." + message;
+                    CurrentActivity = programPart + "." + message;
                 #region getDiagnostics = memory and cpu
                 Process p = Process.GetCurrentProcess();                
                 float fcpu = Diagnostics.get_cpu_percent_usage(p);
@@ -725,12 +729,12 @@ namespace My
             return true;
         }
 
-        void renewSleep()
+        void renewSleepAndCurrentActivity()
         {
             while (!_closing)
                 try
                 {
-                    textBox3.Text = _currentActivity;
+                    textBox3.Text = CurrentActivity;
                     if (ShowSleepingInfo && _sleptTime.TotalSeconds >= 1)
                     {
                         string sleepstring = "(сон " + DateAndTime.convertTimeSpanToString(_sleptTime) + ")";
@@ -757,7 +761,7 @@ namespace My
                     if (_somethingChanged || _closing)
                         return;     
             }
-        }
+        }        
 
         #endregion
         

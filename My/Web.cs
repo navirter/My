@@ -543,11 +543,21 @@ namespace My
                 if (stop)
                     break;
             }
+            while (ThreadSeeker.pause)
+            {
+                Application.DoEvents();
+                Thread.Sleep(100);
+            }
         }
 
         static void waitSmoothly(double seconds)
         {
             for (double i = 0.1; i < seconds; i += 0.1)
+            {
+                Application.DoEvents();
+                Thread.Sleep(100);
+            }
+            while (ThreadSeeker.pause)
             {
                 Application.DoEvents();
                 Thread.Sleep(100);
