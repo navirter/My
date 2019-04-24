@@ -421,21 +421,13 @@ namespace My
         /// </summary>        
         public static class AddMessage
         {
-            public static void Done(string particularPart)
+            public static void Start(string particularPart, bool system = true)
             {
-                ThreadSeeker.addMessage( particularPart, "done", false, true);
+                ThreadSeeker.addMessage(particularPart, "start", false, system);
             }
-            public static void Fail(string particularPart, string failMessage = "")
+            public static void NotNeeded(string particularPart, bool system = true)
             {
-                ThreadSeeker.addMessage( particularPart, "fail. " + failMessage, true, true);
-            }
-            public static void Start(string particularPart)
-            {
-                ThreadSeeker.addMessage(particularPart, "start", false, true);
-            }
-            public static void NotNeeded(string particularPart)
-            {
-                ThreadSeeker.addMessage( particularPart, "not needed", false, true);
+                ThreadSeeker.addMessage( particularPart, "not needed", false, system);
             }
             public static void Cancel(string particularPart)
             {
@@ -444,6 +436,14 @@ namespace My
             public static void Stop(string particularPart)
             {
                 ThreadSeeker.addMessage(particularPart, "stop", false, false, true);
+            }
+            public static void Fail(string particularPart, string failMessage = "")
+            {
+                ThreadSeeker.addMessage( particularPart, "fail. " + failMessage, true, true, false);
+            }
+            public static void Done(string particularPart, bool system = true)
+            {
+                ThreadSeeker.addMessage( particularPart, "done", false, system);
             }
         }
         #endregion
