@@ -38,8 +38,9 @@
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.button5 = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.checkBox2 = new System.Windows.Forms.CheckBox();
             this.button4 = new System.Windows.Forms.Button();
-            this.textBox3 = new System.Windows.Forms.TextBox();
+            this.tb_CurrentActivity = new System.Windows.Forms.TextBox();
             this.checkBox3 = new System.Windows.Forms.CheckBox();
             this.label4 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
@@ -48,7 +49,6 @@
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
-            this.checkBox2 = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -151,7 +151,7 @@
             this.groupBox1.Controls.Add(this.checkBox2);
             this.groupBox1.Controls.Add(this.button5);
             this.groupBox1.Controls.Add(this.button4);
-            this.groupBox1.Controls.Add(this.textBox3);
+            this.groupBox1.Controls.Add(this.tb_CurrentActivity);
             this.groupBox1.Controls.Add(this.checkBox3);
             this.groupBox1.Controls.Add(this.label4);
             this.groupBox1.Controls.Add(this.label3);
@@ -175,6 +175,18 @@
             this.groupBox1.Text = "Логгирование";
             this.groupBox1.Enter += new System.EventHandler(this.groupBox1_Enter);
             // 
+            // checkBox2
+            // 
+            this.checkBox2.AutoSize = true;
+            this.checkBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.25F);
+            this.checkBox2.Location = new System.Drawing.Point(157, 15);
+            this.checkBox2.Name = "checkBox2";
+            this.checkBox2.Size = new System.Drawing.Size(53, 16);
+            this.checkBox2.TabIndex = 17;
+            this.checkBox2.Text = "Сжать";
+            this.checkBox2.UseVisualStyleBackColor = true;
+            this.checkBox2.CheckedChanged += new System.EventHandler(this.somethingChanged);
+            // 
             // button4
             // 
             this.button4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
@@ -186,16 +198,17 @@
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
-            // textBox3
+            // tb_CurrentActivity
             // 
-            this.textBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this.tb_CurrentActivity.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox3.Location = new System.Drawing.Point(44, 576);
-            this.textBox3.Name = "textBox3";
-            this.textBox3.ReadOnly = true;
-            this.textBox3.ScrollBars = System.Windows.Forms.ScrollBars.Horizontal;
-            this.textBox3.Size = new System.Drawing.Size(303, 20);
-            this.textBox3.TabIndex = 14;
+            this.tb_CurrentActivity.Location = new System.Drawing.Point(44, 576);
+            this.tb_CurrentActivity.Name = "tb_CurrentActivity";
+            this.tb_CurrentActivity.ReadOnly = true;
+            this.tb_CurrentActivity.ScrollBars = System.Windows.Forms.ScrollBars.Horizontal;
+            this.tb_CurrentActivity.Size = new System.Drawing.Size(303, 20);
+            this.tb_CurrentActivity.TabIndex = 14;
+            this.tb_CurrentActivity.MouseHover += new System.EventHandler(this.tb_CurrentActivity_MouseHover);
             // 
             // checkBox3
             // 
@@ -285,18 +298,6 @@
             this.checkBox1.UseVisualStyleBackColor = true;
             this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
-            // checkBox2
-            // 
-            this.checkBox2.AutoSize = true;
-            this.checkBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.25F);
-            this.checkBox2.Location = new System.Drawing.Point(157, 15);
-            this.checkBox2.Name = "checkBox2";
-            this.checkBox2.Size = new System.Drawing.Size(53, 16);
-            this.checkBox2.TabIndex = 17;
-            this.checkBox2.Text = "Сжать";
-            this.checkBox2.UseVisualStyleBackColor = true;
-            this.checkBox2.CheckedChanged += new System.EventHandler(this.somethingChanged);
-            // 
             // ThreadSeeker
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -329,7 +330,7 @@
         private System.Windows.Forms.TextBox POtb;
         private System.Windows.Forms.TextBox Stb;
         private System.Windows.Forms.CheckBox checkBox3;
-        private System.Windows.Forms.TextBox textBox3;
+        private System.Windows.Forms.TextBox tb_CurrentActivity;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.CheckBox checkBox2;

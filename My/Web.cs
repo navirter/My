@@ -461,7 +461,7 @@ namespace My
                 int noInternetTimes = 0, connectionResetTimes = 0, mainFrameErrorTimes = 0, tooLongToRespondTimes = 0;
                 for (int i = 0; i < tryouts; i++)
                 {
-                    #region tryout logic = navigation + checking for stop, taleratable errors, and exceptional errors
+                    #region tryout logic = navigation + checking for stop, taleratable errors, and exceptional errors                   
                     cd.Url = url;
                     waitSmoothly(delaySeconds, ref stop);
                     if (stop) return false;

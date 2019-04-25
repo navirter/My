@@ -387,9 +387,9 @@ namespace My
         /// it will be shown in bottom line
         /// </summary>
         public static string CurrentActivity { get; set; } = "";
-        static TimeSpan _sleptTime { get; set; } = new TimeSpan();
+        public static string CurrentActivityToolTip { get; set; } = "";
         
-
+        static TimeSpan _sleptTime { get; set; } = new TimeSpan();
         static DateTime _start = DateTime.Now;
         static int _dangerMemoryMB = 750;
         static bool _launchIfIdle = false;
@@ -401,7 +401,7 @@ namespace My
         static bool _showDetailedInfo = false;
         static bool _showImportantOnly = false;
         static int _reshowDelay = 15;
-        static bool _closing = false;
+        static bool _closing = false;        
 
         Thread _threadRenewData;
         Thread _threadRenewSleepAndCurrentActivity;
@@ -734,13 +734,13 @@ namespace My
             while (!_closing)
                 try
                 {
-                    textBox3.Text = CurrentActivity;
+                    tb_CurrentActivity.Text = CurrentActivity;
                     if (ShowSleepingInfo && _sleptTime.TotalSeconds >= 1)
                     {
                         string sleepstring = "(сон " + DateAndTime.convertTimeSpanToString(_sleptTime) + ")";
-                        if (textBox3.Text.Contains("(сон"))
-                            textBox3.Text = textBox3.Text.Remove(textBox3.Text.IndexOf("(сон"));
-                        textBox3.Text += sleepstring;
+                        if (tb_CurrentActivity.Text.Contains("(сон"))
+                            tb_CurrentActivity.Text = tb_CurrentActivity.Text.Remove(tb_CurrentActivity.Text.IndexOf("(сон"));
+                        tb_CurrentActivity.Text += sleepstring;
                     }
                     if (_launchIfIdle)
                     {
@@ -930,6 +930,11 @@ namespace My
             _somethingChanged = true;
         }
 
+        private void tb_CurrentActivity_MouseHover(object sender, EventArgs e)
+        {
+            if (CurrentActivityToolTip != "")
+                toolTip1.Show(CurrentActivityToolTip, (Control)sender, 3000);
+        }
 
         #endregion
 
