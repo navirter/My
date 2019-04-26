@@ -69,10 +69,10 @@ namespace My
         /// </summary>
         /// <param name="visible">False if chrome must run silently</param>
         /// <param name="ignoreSetificateErrors"></param>
-        /// <param name="windowsUserName">Leave it empty not to use a consistant chrome profile</param>
+        /// <param name="extensionPaths">Leave it empty or null not to use a consistant chrome profile</param>
         /// <returns></returns>
         public static ChromeDriverHelper chromedriver_set_up(bool visible = true, bool ignoreSetificateErrors = true
-            , string windowsUserName = "")
+            , string[] extensionPaths = null)
         {
             try
             {
@@ -94,19 +94,17 @@ namespace My
                     throw new Exception("Can't set visibility. " + e.Message);
                 }
                 #endregion
-                #region set profile path
-                string defaultProfilePath = @"C:\Users\<USERNAME>\AppData\Local\Temp\scoped_dir8764_15668\Default;";
+                #region set extensions
                 try
                 {
-                    if (!string.IsNullOrEmpty(windowsUserName))
-                    {
-                        string chromeProfilePath = defaultProfilePath.Replace("<USERNAME>", windowsUserName);
-                        options.AddArgument("user-data-dir=" + chromeProfilePath);
-                    }
+                    if (extensionPaths != null)
+                        foreach (var extension in extensionPaths)
+                            if (!string.IsNullOrEmpty(extension))                            
+                                options.AddExtension(extension);                            
                 }
                 catch (Exception e)
                 {
-                    throw new Exception("Can't set chrome profile path.\nIt must look like:\n" + defaultProfilePath + "\n" + e.Message);
+                    throw new Exception("Can't set chrome extensions: " + e.Message);
                 }
                 #endregion
                 #region set ignore sertificate errors

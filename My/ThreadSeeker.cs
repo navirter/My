@@ -388,7 +388,22 @@ namespace My
         /// </summary>
         public static string CurrentActivity { get; set; } = "";
         public static string CurrentActivityToolTip { get; set; } = "";
-        
+        #region public static bool pause
+        /// <summary>
+        /// valuable for managing user set pauses in application
+        /// </summary>
+        public static bool pause { get; private set; } = false;
+        public static void pause_set(bool value)
+        {
+            pause = value;
+            if (value)
+                pause_button.Text = "||";
+            else
+                pause_button.Text = ">";
+        }
+        #endregion
+        public static bool Stop { get; private set; } = false;
+
         static TimeSpan _sleptTime { get; set; } = new TimeSpan();
         static DateTime _start = DateTime.Now;
         static int _dangerMemoryMB = 750;
@@ -903,20 +918,7 @@ namespace My
             _showDetailedInfo = checkBox3.Checked;
             _somethingChanged = true;
         }
-
-        /// <summary>
-        /// valuable for managing user set pauses in application
-        /// </summary>
-        public static bool pause { get; private set; } = false;
-        public static void pause_set(bool value)
-        {
-            pause = value;
-            if (value)
-                pause_button.Text = "||";
-            else
-                pause_button.Text = ">";            
-        }
-        
+                
         private void button4_Click(object sender, EventArgs e)
         {
             if (button4.Text == ">")
@@ -934,6 +936,17 @@ namespace My
         {
             if (CurrentActivityToolTip != "")
                 toolTip1.Show(CurrentActivityToolTip, (Control)sender, 3000);
+        }
+
+
+        private void b_Stop_Click(object sender, EventArgs e)
+        {
+            var dr = MessageBox.Show("Вы уверены в остановке программы?", "Треуется подтверждение", MessageBoxButtons.YesNo);
+            if (dr == DialogResult.Yes)
+            {
+                Stop = true;
+                pause_set(false);
+            }
         }
 
         #endregion

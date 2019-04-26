@@ -49,6 +49,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
+            this.b_Stop = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -150,6 +151,7 @@
             // 
             this.groupBox1.Controls.Add(this.checkBox2);
             this.groupBox1.Controls.Add(this.button5);
+            this.groupBox1.Controls.Add(this.b_Stop);
             this.groupBox1.Controls.Add(this.button4);
             this.groupBox1.Controls.Add(this.tb_CurrentActivity);
             this.groupBox1.Controls.Add(this.checkBox3);
@@ -202,11 +204,11 @@
             // 
             this.tb_CurrentActivity.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.tb_CurrentActivity.Location = new System.Drawing.Point(44, 576);
+            this.tb_CurrentActivity.Location = new System.Drawing.Point(78, 576);
             this.tb_CurrentActivity.Name = "tb_CurrentActivity";
             this.tb_CurrentActivity.ReadOnly = true;
             this.tb_CurrentActivity.ScrollBars = System.Windows.Forms.ScrollBars.Horizontal;
-            this.tb_CurrentActivity.Size = new System.Drawing.Size(303, 20);
+            this.tb_CurrentActivity.Size = new System.Drawing.Size(269, 20);
             this.tb_CurrentActivity.TabIndex = 14;
             this.tb_CurrentActivity.MouseHover += new System.EventHandler(this.tb_CurrentActivity_MouseHover);
             // 
@@ -298,6 +300,17 @@
             this.checkBox1.UseVisualStyleBackColor = true;
             this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
+            // b_Stop
+            // 
+            this.b_Stop.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.b_Stop.Location = new System.Drawing.Point(40, 574);
+            this.b_Stop.Name = "b_Stop";
+            this.b_Stop.Size = new System.Drawing.Size(35, 23);
+            this.b_Stop.TabIndex = 15;
+            this.b_Stop.Text = "[]";
+            this.b_Stop.UseVisualStyleBackColor = true;
+            this.b_Stop.Click += new System.EventHandler(this.b_Stop_Click);
+            // 
             // ThreadSeeker
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -334,5 +347,6 @@
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.CheckBox checkBox2;
+        private System.Windows.Forms.Button b_Stop;
     }
 }
