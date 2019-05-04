@@ -82,7 +82,9 @@
     <Compile Include="Loading_progress.Designer.cs">
       <DependentUpon>Loading_progress.cs</DependentUpon>
     </Compile>
-    <Compile Include="Web.cs" />
+    <Compile Include="Web\Chrome.cs" />
+    <Compile Include="Web\Tor.cs" />
+    <Compile Include="WaitSmoothly.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ThreadSeeker.resx">

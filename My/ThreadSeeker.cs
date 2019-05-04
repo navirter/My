@@ -284,7 +284,7 @@ namespace My
         public void close()
         {
             addMessage("ThreadSeeker.closing", "Логгер закрыт", true, false, false);
-            _closing = true;
+            _closing = true;            
             try { _threadRenewData.Abort(); } catch { }
             try { _threadRenewSleepAndCurrentActivity.Abort(); } catch { }
             Dispose(true);
@@ -402,7 +402,7 @@ namespace My
                 pause_button.Text = ">";
         }
         #endregion
-        public static bool Stop { get; private set; } = false;
+        public static bool Stop { get; set; } = false;
 
         static TimeSpan _sleptTime { get; set; } = new TimeSpan();
         static DateTime _start = DateTime.Now;
@@ -444,17 +444,17 @@ namespace My
             {
                 ThreadSeeker.addMessage( particularPart, "not needed", false, system);
             }
-            public static void Cancel(string particularPart)
+            public static void Cancel(string particularPart, bool system = false)
             {
-                ThreadSeeker.addMessage(particularPart, "cancel", false, false, true);
+                ThreadSeeker.addMessage(particularPart, "cancel", false, system, true);
             }
-            public static void Stop(string particularPart)
+            public static void Stop(string particularPart, bool system = false)
             {
-                ThreadSeeker.addMessage(particularPart, "stop", false, false, true);
+                ThreadSeeker.addMessage(particularPart, "stop", false, system, true);
             }
-            public static void Fail(string particularPart, string failMessage = "")
+            public static void Fail(string particularPart, string failMessage = "", bool system = true)
             {
-                ThreadSeeker.addMessage( particularPart, "fail. " + failMessage, true, true, false);
+                ThreadSeeker.addMessage( particularPart, "fail. " + failMessage, true, system, false);
             }
             public static void Done(string particularPart, bool system = true)
             {
