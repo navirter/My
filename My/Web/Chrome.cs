@@ -16,11 +16,9 @@ namespace My.Web
     public class Chrome
     {
         #region chromeDriver management
-        /// <summary>
-        /// last created chromeDriver
-        /// </summary>
-        public static ChromeDriverHelper LastChromeDriverHelper { get; private set; }
         public static List<ChromeDriverHelper> ChromeDriverHelpers { get; private set; } = new List<ChromeDriverHelper>();
+        public static ChromeDriverHelper LastChromeDriverHelper { get { return ChromeDriverHelpers.LastOrDefault(); } }
+        public static ChromeDriver LastChrome { get { return LastChromeDriverHelper.ChromeDriver; } }
 
         public class ChromeDriverHelper
         {
@@ -29,10 +27,11 @@ namespace My.Web
         }
 
         #region public static List<string> chromeDriversIds
-        static List<string> lastCreatedDriverIds = new List<string>();//filled at chromedriver initialization
-                                                                      /// <summary>
-                                                                      /// All attached processes of all helpers
-                                                                      /// </summary>
+        static List<string> lastCreatedDriverIds = new List<string>();
+        ///filled at chromedriver initialization
+        /// <summary>
+        /// All attached processes of all helpers
+        /// </summary>
         public static List<string> chromeDriversIds
         {
             get
@@ -138,7 +137,6 @@ namespace My.Web
                 //save new helper to list
                 var lastHelper = new ChromeDriverHelper() { ChromeDriver = chrome, AttachedProcessesIds = lastCreatedDriverIds };
                 ChromeDriverHelpers.Add(lastHelper);
-                LastChromeDriverHelper = lastHelper;
                 //save newly created processees' ids to a file
                 File.AppendAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", lastCreatedDriverIds);
                 return lastHelper;
@@ -165,7 +163,6 @@ namespace My.Web
                 File.WriteAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", chromeDriversIds);
                 ChromeDriverHelpers.Remove(helper);
                 helper = null;
-                LastChromeDriverHelper = ChromeDriverHelpers.LastOrDefault();
             }
             catch (Exception e)
             {
@@ -215,7 +212,6 @@ namespace My.Web
                 if (DateTime.Now - now > TimeSpan.FromSeconds(seconds))
                     break;
             }
-            LastChromeDriverHelper = null;
             ChromeDriverHelpers = new List<ChromeDriverHelper>();
             File.WriteAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", chromeDriversIds);
         }
