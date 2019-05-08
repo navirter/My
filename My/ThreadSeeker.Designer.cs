@@ -39,6 +39,7 @@
             this.button5 = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.checkBox2 = new System.Windows.Forms.CheckBox();
+            this.b_Stop = new System.Windows.Forms.Button();
             this.button4 = new System.Windows.Forms.Button();
             this.tb_CurrentActivity = new System.Windows.Forms.TextBox();
             this.checkBox3 = new System.Windows.Forms.CheckBox();
@@ -49,7 +50,6 @@
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
-            this.b_Stop = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -72,6 +72,7 @@
             this.listView1.View = System.Windows.Forms.View.List;
             this.listView1.Click += new System.EventHandler(this.listView1_Click);
             this.listView1.DoubleClick += new System.EventHandler(this.listView1_DoubleClick);
+            this.listView1.MouseHover += new System.EventHandler(this.listView1_MouseHover);
             // 
             // button1
             // 
@@ -189,6 +190,17 @@
             this.checkBox2.UseVisualStyleBackColor = true;
             this.checkBox2.CheckedChanged += new System.EventHandler(this.somethingChanged);
             // 
+            // b_Stop
+            // 
+            this.b_Stop.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.b_Stop.Location = new System.Drawing.Point(40, 574);
+            this.b_Stop.Name = "b_Stop";
+            this.b_Stop.Size = new System.Drawing.Size(35, 23);
+            this.b_Stop.TabIndex = 15;
+            this.b_Stop.Text = "[]";
+            this.b_Stop.UseVisualStyleBackColor = true;
+            this.b_Stop.Click += new System.EventHandler(this.b_Stop_Click);
+            // 
             // button4
             // 
             this.button4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
@@ -299,17 +311,6 @@
             this.checkBox1.Text = "только важные";
             this.checkBox1.UseVisualStyleBackColor = true;
             this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
-            // 
-            // b_Stop
-            // 
-            this.b_Stop.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.b_Stop.Location = new System.Drawing.Point(40, 574);
-            this.b_Stop.Name = "b_Stop";
-            this.b_Stop.Size = new System.Drawing.Size(35, 23);
-            this.b_Stop.TabIndex = 15;
-            this.b_Stop.Text = "[]";
-            this.b_Stop.UseVisualStyleBackColor = true;
-            this.b_Stop.Click += new System.EventHandler(this.b_Stop_Click);
             // 
             // ThreadSeeker
             // 

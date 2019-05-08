@@ -58,10 +58,12 @@ namespace My.Web
         /// </summary>
         /// <param name="visible">False if chrome must run silently</param>
         /// <param name="ignoreSetificateErrors"></param>
+        /// <param name="proxyServer">IPAddress:Port</param>
+        /// <param name="proxyWithAuthentication"></param>
         /// <param name="extensionPaths">Leave it empty or null not to use a consistant chrome profile</param>
         /// <returns></returns>
         public static ChromeDriverHelper chromedriver_set_up(bool visible = true, bool ignoreSetificateErrors = true
-            , string[] extensionPaths = null)
+            , string[] extensionPaths = null, string proxyServer = "", bool proxyWithAuthentication = false)
         {
             try
             {
@@ -72,6 +74,21 @@ namespace My.Web
                 #region set options
                 options.AddArgument("--enable-extensions");
                 options.AddArgument("--start-maximized");
+                #region proxy
+                if (proxyServer != "")
+                {
+                    Proxy proxy = new Proxy()
+                    {
+                        Kind = ProxyKind.Manual,
+                        IsAutoDetect = false,
+                        HttpProxy = proxyServer,//"127.0.0.1:3330",
+                        SslProxy = proxyServer//"127.0.0.1:3330"
+                    };
+                    options.Proxy = proxy;
+                    if (proxyWithAuthentication)
+                        options.AddArguments("--proxy-server=http://user:password@yourProxyServer.com:8080");
+                }
+                #endregion
                 #region set visibility
                 try
                 {
@@ -108,8 +125,8 @@ namespace My.Web
                     throw new Exception("Can't set ignore certificate errors. " + e.Message);
                 }
                 #endregion
-                //options.AddArgument("--window-position=-32000,-32000");
                 #endregion
+                
                 //get chrome related processes before initialization. Can throw error that access denied. Dealt away with running as administaror
                 var chromeRelatedIds = Process.GetProcesses()
                     .Where(s => _processesToCheck.FirstOrDefault(x => s.ProcessName.ToLower().Contains(x)) != null)
@@ -313,7 +330,7 @@ namespace My.Web
         /// <param name="stop"></param>
         /// <param name="tryouts"></param>
         /// <returns></returns>
-        public static bool NavigateLastChrome(string url, int minDelaySeconds, int maxDelaySeconds, ref bool stop, int tryouts = 3)
+        public static bool NavigateLastChrome(string url, double minDelaySeconds, double maxDelaySeconds, ref bool stop, int tryouts = 3)
         {
             return NavigateChrome(Web.Chrome.LastChromeDriverHelper.ChromeDriver, url, minDelaySeconds, maxDelaySeconds, ref stop, tryouts);
         }
@@ -326,7 +343,7 @@ namespace My.Web
         /// <param name="maxDelaySeconds"></param>
         /// <param name="tryouts"></param>
         /// <returns></returns>
-        public static bool NavigateLastChrome(string url, int minDelaySeconds, int maxDelaySeconds, int tryouts = 3)
+        public static bool NavigateLastChrome(string url, double minDelaySeconds, double maxDelaySeconds, int tryouts = 3)
         {
             return NavigateChrome(Web.Chrome.LastChromeDriverHelper.ChromeDriver, url, minDelaySeconds, maxDelaySeconds, tryouts);
         }
@@ -339,7 +356,7 @@ namespace My.Web
         /// <param name="stop"></param>
         /// <param name="tryouts"></param>
         /// <returns></returns>
-        public static bool NavigateLastChrome(string url, int delaySeconds, ref bool stop, int tryouts = 3)
+        public static bool NavigateLastChrome(string url, double delaySeconds, ref bool stop, int tryouts = 3)
         {
             return NavigateChrome(Web.Chrome.LastChromeDriverHelper.ChromeDriver, url, delaySeconds, ref stop, tryouts);
         }
@@ -368,9 +385,11 @@ namespace My.Web
         /// <param name="stop"></param>
         /// <param name="tryouts"></param>
         /// <returns></returns>
-        public static bool NavigateChrome(ChromeDriver cd, string url, int minDelaySeconds, int maxDelaySeconds, ref bool stop, int tryouts = 3)
+        public static bool NavigateChrome(ChromeDriver cd, string url, double minDelaySeconds, double maxDelaySeconds, ref bool stop, int tryouts = 3)
         {
-            double rand = new Random().Next(minDelaySeconds, maxDelaySeconds);
+            int min = Convert.ToInt32(minDelaySeconds);
+            int max = Convert.ToInt32(maxDelaySeconds);
+            double rand = new Random().Next(min, max);
             return NavigateChrome(cd, url, rand, ref stop, tryouts);
         }
 
@@ -383,9 +402,11 @@ namespace My.Web
         /// <param name="maxDelaySeconds"></param>
         /// <param name="tryouts"></param>
         /// <returns></returns>
-        public static bool NavigateChrome(ChromeDriver cd, string url, int minDelaySeconds, int maxDelaySeconds, int tryouts = 3)
+        public static bool NavigateChrome(ChromeDriver cd, string url, double minDelaySeconds, double maxDelaySeconds, int tryouts = 3)
         {
-            double rand = new Random().Next(minDelaySeconds, maxDelaySeconds);
+            int min = Convert.ToInt32(minDelaySeconds);
+            int max = Convert.ToInt32(maxDelaySeconds);
+            double rand = new Random().Next(min, max);
             return NavigateChrome(cd, url, rand, tryouts);
         }
         #endregion
@@ -431,7 +452,7 @@ namespace My.Web
                 {
                     #region tryout logic = navigation + checking for stop, taleratable errors, and exceptional errors                   
                     cd.Url = url;
-                    WaitSmoothly.Do(delaySeconds, ref stop);
+                    WaitSmoothly.Do(delaySeconds);
                     if (stop) return false;
 
                     isExceptionalError(cd.PageSource, cd.Url);

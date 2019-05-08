@@ -932,10 +932,23 @@ namespace My
             _somethingChanged = true;
         }
 
+
+        private void listView1_MouseHover(object sender, EventArgs e)
+        {
+            try
+            {
+                toolTip1.Show(listView1.SelectedItems[0].Text, (Control)sender, 3000);
+            }
+            catch { }
+        }
+
         private void tb_CurrentActivity_MouseHover(object sender, EventArgs e)
         {
             if (CurrentActivityToolTip != "")
                 toolTip1.Show(CurrentActivityToolTip, (Control)sender, 3000);
+            else
+                toolTip1.Show(tb_CurrentActivity.Text, (Control)sender, 3000);
+
         }
 
 
