@@ -937,7 +937,9 @@ namespace My
         {
             try
             {
-                toolTip1.Show(listView1.SelectedItems[0].Text, (Control)sender, 3000);
+                string text = "Клик для копирования ссылки(если есть).\nДвойной клик для поллного копирования.\n"
+                    + listView1.SelectedItems[0].Text;
+                toolTip1.Show(text, (Control)sender, 3000);
             }
             catch { }
         }

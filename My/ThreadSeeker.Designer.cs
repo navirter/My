@@ -67,7 +67,6 @@
             this.listView1.Name = "listView1";
             this.listView1.Size = new System.Drawing.Size(350, 493);
             this.listView1.TabIndex = 0;
-            this.toolTip1.SetToolTip(this.listView1, "Клик для копирования ссылки(если есть)\r\nДвойной клик для поллного копирования");
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.List;
             this.listView1.Click += new System.EventHandler(this.listView1_Click);
