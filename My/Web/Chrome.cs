@@ -15,16 +15,11 @@ namespace My.Web
 {
     public class Chrome
     {
-        #region chromeDriver management
-        public static List<ChromeDriverHelper> ChromeDriverHelpers { get; private set; } = new List<ChromeDriverHelper>();
-        public static ChromeDriverHelper LastChromeDriverHelper { get { return ChromeDriverHelpers.LastOrDefault(); } }
-        public static ChromeDriver LastChrome { get { return LastChromeDriverHelper.ChromeDriver; } }
-
         public class ChromeDriverHelper
         {
+            #region fields
             public ChromeDriver ChromeDriver { get; set; }
             public List<string> AttachedProcessesIds { get; set; }
-
             public string CurrentUrl
             {
                 get
@@ -36,14 +31,156 @@ namespace My.Web
                     ChromeDriver.Url = value;
                 }
             }
-            public string CurrentPageSource { get { return ChromeDriver.PageSource; } }            
+            public string CurrentPageSource { get { return ChromeDriver.PageSource; } }
+            #endregion
 
-            public void Navigate(string Url)
+            #region Navigate(URL or smoothly with parameters)
+            public void Navigate(string URL)
             {
-                this.CurrentUrl = Url;
+                this.CurrentUrl = URL;
             }
+            
+            /// <summary>
+            /// Smooth chrome navigation. Can be stopped.
+            /// </summary>
+            /// <param name="cd"></param>
+            /// <param name="URL"></param>
+            /// <param name="delaySeconds"></param>
+            /// <param name="stop"></param>
+            /// <param name="tryouts"></param>
+            /// <returns></returns>
+            public bool Navigate(string URL, double delaySeconds, int tryouts = 3)
+            {
+                #region check arguments
+                if (ChromeDriver == null)
+                    throw new ArgumentNullException("Chrome is null");
+                if (string.IsNullOrEmpty(URL))
+                    throw new ArgumentNullException("URL is null or empty");
+                if (delaySeconds <= 0 || tryouts <= 0)
+                    throw new ArgumentOutOfRangeException("Delay and tryouts cannot be less or equal 0");
+                #endregion
+                try
+                {
+                    //toleratable errors counters
+                    int noInternetTimes = 0, connectionResetTimes = 0, mainFrameErrorTimes = 0, tooLongToRespondTimes = 0;
+                    for (int i = 0; i < tryouts; i++)
+                    {
+                        #region tryout logic = navigation + checking for stop, taleratable errors, and exceptional errors                                 
+                        ChromeDriver.Url = URL;
+                        WaitSmoothly.Do(delaySeconds);
+                        if (ThreadSeeker.Stop) return false;
+
+                        isExceptionalError(ChromeDriver.PageSource, ChromeDriver.Url);
+                        if (isContinuableError(ref noInternetTimes, ref connectionResetTimes, ref mainFrameErrorTimes, ref tooLongToRespondTimes))
+                            continue;
+                        #endregion
+                        //if no errors
+                        return true;
+                    }
+                    #region build and throw Exception message, since I failed to download the page tryouts times
+                    string message = "No connection after " + tryouts + " tryouts";
+                    if (noInternetTimes > 0)
+                        message += "\nNo internet connection times " + noInternetTimes;
+                    if (connectionResetTimes > 0)
+                        message += "\nConnection reset times " + connectionResetTimes;
+                    if (mainFrameErrorTimes > 0)
+                        message += "\nCommon error times " + mainFrameErrorTimes;
+                    throw new Exception(message);
+                    #endregion
+                }
+                catch (Exception e)
+                {
+                    throw new Exception("Cannot navigate chrome: " + e.Message);
+                }
+            }
+            
+            bool isContinuableError(ref int noInternetTimes, ref int connectionResetTimes, ref int mainFrameErrorTimes, ref int tooLongToRespond)
+            {
+                var cd = ChromeDriver;
+                if (cd.PageSource.Contains("No internet"))
+                {
+                    noInternetTimes++;
+                    return true;
+                }
+                if (cd.PageSource.Contains("The connection was reset."))
+                {
+                    connectionResetTimes++;
+                    return true;
+                }
+                if (cd.PageSource.Contains("took too long to respond."))
+                {
+                    tooLongToRespond++;
+                    return true;
+                }
+
+                try
+                {
+                    var mfe = FindLastOrDefaultElement("", "div", "main-frame-error");
+                    if (mfe != null)
+                    {
+                        mainFrameErrorTimes++;
+                        return true;
+                    }
+                }
+                catch { }
+                return false;
+            }
+
+            void isExceptionalError(string pageSource, string URL)
+            {
+                if (URL.StartsWith("blocked"))
+                    throw new Exception("Proxy failed to fight through cencorship!");
+                if (pageSource.Contains("unexpectedly closed the connection."))
+                    throw new Exception("Site unexpectedly closed the connection.");
+            }
+            #endregion
+
+            #region useful functionality for chromedriver
+
+            /// <summary>
+            /// At least 1 parameter must not be empty. Serches by Id first, then by tag, then by text. In the last case it returns the first occurence
+            /// </summary>
+            /// <param name="text"></param>
+            /// <param name="tag"></param>
+            /// <param name="id"></param>
+            /// <returns></returns>
+            public IWebElement FindLastOrDefaultElement(string text = "", string tag = "", string id = "")
+            {
+                if (id != "")
+                {
+                    return ChromeDriver.FindElementById(id);
+                }
+                if (tag != "")
+                {
+                    var elems = ChromeDriver.FindElements(By.TagName(tag));
+                    if (text != "")
+                        return elems.LastOrDefault(s => s.Text == text || s.Text.Trim() == text);
+                    else
+                        return elems.LastOrDefault();
+                }
+                var texts = ChromeDriver.FindElementsByXPath(string.Format("//*[contains(text(), '{0}')]", text));
+                var lastText = texts.LastOrDefault();
+                if (lastText != null)
+                    return lastText;
+                else
+                    return null;
+            }
+
+
+
+            #endregion
         }
 
+        public static List<ChromeDriverHelper> ChromeDriverHelpers { get; private set; } = new List<ChromeDriverHelper>();
+        public static ChromeDriverHelper LastChromeDriverHelper { get { return ChromeDriverHelpers.LastOrDefault(); } }
+        public static ChromeDriver LastChrome { get { return LastChromeDriverHelper.ChromeDriver; } }
+        
+        #region setting up and disposal
+
+        static string[] _processesToCheck = {
+        "chrome",
+        "chromedriver",
+        "conhost"};
         #region public static List<string> chromeDriversIds
         static List<string> lastCreatedDriverIds = new List<string>();
         ///filled at chromedriver initialization
@@ -60,11 +197,6 @@ namespace My.Web
             }
         }
         #endregion
-
-        static string[] _processesToCheck = {
-        "chrome",
-        "chromedriver",
-        "conhost"};
 
         #region  public static ChromeDriverHelper chromedriver_set_up
         /// <summary>
@@ -84,7 +216,7 @@ namespace My.Web
             , string[] extensionPaths = null, string proxyServer = "", bool proxyWithAuthentication = false)
         {
             try
-            {
+            {                
                 //create instance
                 var service = ChromeDriverService.CreateDefaultService();
                 service.HideCommandPromptWindow = true;
@@ -277,271 +409,6 @@ namespace My.Web
             }
 
         }
-        #endregion
-
-        #region useful functionality for chromedriver
-
-        /// <summary>
-        /// At least 1 parameter must not be empty. Serches by Id first, then by tag, then by text. In the last case it returns the first occurence
-        /// </summary>
-        /// <param name="chrome"></param>
-        /// <param name="text"></param>
-        /// <param name="tag"></param>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public static IWebElement FindLastOrDefaultElement(ChromeDriver chrome, string text = "", string tag = "", string id = "")
-        {
-            if (id != "")
-            {
-                return chrome.FindElementById(id);
-            }
-            if (tag != "")
-            {
-                var elems = chrome.FindElements(By.TagName(tag));
-                if (text != "")
-                    return elems.LastOrDefault(s => s.Text == text || s.Text.Trim() == text);
-                else
-                    return elems.LastOrDefault();
-            }
-            var texts = chrome.FindElementsByXPath(string.Format("//*[contains(text(), '{0}')]", text));
-            var lastText = texts.LastOrDefault();
-            if (lastText != null)
-                return lastText;
-            else
-                return null;
-        }
-
-        /// <summary>
-        /// At least 1 parameter must not be empty. Serches by Id first, then by tag, then by text. In the last case it returns the first occurence
-        /// </summary>
-        /// <param name="chrome"></param>
-        /// <param name="text"></param>
-        /// <param name="tag"></param>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public static IWebElement FindFirstOrDefaultElement(ChromeDriver chrome, string text = "", string tag = "", string id = "")
-        {
-            if (id != "")
-            {
-                return chrome.FindElementById(id);
-            }
-            if (tag != "")
-            {
-                var elems = chrome.FindElements(By.TagName(tag));
-                if (text != "")
-                    return elems.FirstOrDefault(s => s.Text == text || s.Text.Trim() == text);
-                else
-                    return elems.FirstOrDefault();
-            }
-            var texts = chrome.FindElementsByXPath(string.Format("//*[contains(text(), '{0}')]", text));
-            var firstText = texts.FirstOrDefault();
-            if (firstText != null)
-                return firstText;
-            else
-                return null;
-        }
-
-        #region NavigateChrome(smooth chrome navigation)
-
-        #region last chrome 
-        /// <summary>
-        /// Smooth chrome navigation. Last chrome is used. Can be stopped.
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="minDelaySeconds"></param>
-        /// <param name="maxDelaySeconds"></param>
-        /// <param name="stop"></param>
-        /// <param name="tryouts"></param>
-        /// <returns></returns>
-        public static bool NavigateLastChrome(string url, double minDelaySeconds, double maxDelaySeconds, ref bool stop, int tryouts = 3)
-        {
-            return NavigateChrome(Web.Chrome.LastChromeDriverHelper.ChromeDriver, url, minDelaySeconds, maxDelaySeconds, ref stop, tryouts);
-        }
-
-        /// <summary>
-        /// Smooth chrome navigation. Last chrome is used
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="minDelaySeconds"></param>
-        /// <param name="maxDelaySeconds"></param>
-        /// <param name="tryouts"></param>
-        /// <returns></returns>
-        public static bool NavigateLastChrome(string url, double minDelaySeconds, double maxDelaySeconds, int tryouts = 3)
-        {
-            return NavigateChrome(Web.Chrome.LastChromeDriverHelper.ChromeDriver, url, minDelaySeconds, maxDelaySeconds, tryouts);
-        }
-
-        /// <summary>
-        /// Smooth chrome navigation. Last chrome is used. Can be stopped.
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="delaySeconds"></param>
-        /// <param name="stop"></param>
-        /// <param name="tryouts"></param>
-        /// <returns></returns>
-        public static bool NavigateLastChrome(string url, double delaySeconds, ref bool stop, int tryouts = 3)
-        {
-            return NavigateChrome(Web.Chrome.LastChromeDriverHelper.ChromeDriver, url, delaySeconds, ref stop, tryouts);
-        }
-
-        /// <summary>
-        /// Smooth chrome navigation. Last chrome is used
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="delaySeconds"></param>
-        /// <param name="tryouts"></param>
-        /// <returns></returns>
-        public static bool NavigateLastChrome(string url, double delaySeconds, int tryouts = 3)
-        {
-            return NavigateChrome(Web.Chrome.LastChromeDriverHelper.ChromeDriver, url, delaySeconds, tryouts);
-        }
-        #endregion
-
-        #region target chrome
-        /// <summary>
-        /// Smooth chrome navigation. Can be stopped.
-        /// </summary>
-        /// <param name="cd"></param>
-        /// <param name="url"></param>
-        /// <param name="minDelaySeconds"></param>
-        /// <param name="maxDelaySeconds"></param>
-        /// <param name="stop"></param>
-        /// <param name="tryouts"></param>
-        /// <returns></returns>
-        public static bool NavigateChrome(ChromeDriver cd, string url, double minDelaySeconds, double maxDelaySeconds, ref bool stop, int tryouts = 3)
-        {
-            int min = Convert.ToInt32(minDelaySeconds);
-            int max = Convert.ToInt32(maxDelaySeconds);
-            double rand = new Random().Next(min, max);
-            return NavigateChrome(cd, url, rand, ref stop, tryouts);
-        }
-
-        /// <summary>
-        /// Smooth chrome navigation.
-        /// </summary>
-        /// <param name="cd"></param>
-        /// <param name="url"></param>
-        /// <param name="minDelaySeconds"></param>
-        /// <param name="maxDelaySeconds"></param>
-        /// <param name="tryouts"></param>
-        /// <returns></returns>
-        public static bool NavigateChrome(ChromeDriver cd, string url, double minDelaySeconds, double maxDelaySeconds, int tryouts = 3)
-        {
-            int min = Convert.ToInt32(minDelaySeconds);
-            int max = Convert.ToInt32(maxDelaySeconds);
-            double rand = new Random().Next(min, max);
-            return NavigateChrome(cd, url, rand, tryouts);
-        }
-        #endregion
-
-        /// <summary>
-        /// Smooth chrome navigation.
-        /// </summary>
-        /// <param name="cd"></param>
-        /// <param name="url"></param>
-        /// <param name="delaySeconds"></param>
-        /// <param name="tryouts"></param>
-        /// <returns></returns>
-        public static bool NavigateChrome(ChromeDriver cd, string url, double delaySeconds, int tryouts = 3)
-        {
-            bool placeHolder = false;
-            return NavigateChrome(cd, url, delaySeconds, ref placeHolder, tryouts);
-        }//main function without stop parameter
-
-        /// <summary>
-        /// Smooth chrome navigation. Can be stopped.
-        /// </summary>
-        /// <param name="cd"></param>
-        /// <param name="url"></param>
-        /// <param name="delay"></param>
-        /// <param name="stop"></param>
-        /// <param name="tryouts"></param>
-        /// <returns></returns>
-        public static bool NavigateChrome(ChromeDriver cd, string url, double delaySeconds, ref bool stop, int tryouts = 3)
-        {
-            #region check arguments
-            if (cd == null)
-                throw new ArgumentNullException("Chrome is null");
-            if (string.IsNullOrEmpty(url))
-                throw new ArgumentNullException("URL is null or empty");
-            if (delaySeconds <= 0 || tryouts <= 0)
-                throw new ArgumentOutOfRangeException("Delay and tryouts cannot be less or equal 0");
-            #endregion
-            try
-            {
-                //toleratable errors counters
-                int noInternetTimes = 0, connectionResetTimes = 0, mainFrameErrorTimes = 0, tooLongToRespondTimes = 0;
-                for (int i = 0; i < tryouts; i++)
-                {
-                    #region tryout logic = navigation + checking for stop, taleratable errors, and exceptional errors                   
-                    cd.Url = url;
-                    WaitSmoothly.Do(delaySeconds);
-                    if (stop) return false;
-
-                    isExceptionalError(cd.PageSource, cd.Url);
-                    if (isContinuableError(cd, ref noInternetTimes, ref connectionResetTimes, ref mainFrameErrorTimes, ref tooLongToRespondTimes))
-                        continue;
-                    #endregion
-                    //if no errors
-                    return true;
-                }
-                #region build and throw Exception message, since I failed to download the page thrice
-                string message = "No connection after " + tryouts + " tryouts";
-                if (noInternetTimes > 0)
-                    message += "\nNo internet connection times " + noInternetTimes;
-                if (connectionResetTimes > 0)
-                    message += "\nConnection reset times " + connectionResetTimes;
-                if (mainFrameErrorTimes > 0)
-                    message += "\nCommon error times " + mainFrameErrorTimes;
-                throw new Exception(message);
-                #endregion
-            }
-            catch (Exception e)
-            {
-                throw new Exception("Cannot navigate chrome: " + e.Message);
-            }
-        }//main function with stop parameter
-
-        static bool isContinuableError(ChromeDriver cd, ref int noInternetTimes, ref int connectionResetTimes, ref int mainFrameErrorTimes, ref int tooLongToRespond)
-        {
-            if (cd.PageSource.Contains("No internet"))
-            {
-                noInternetTimes++;
-                return true;
-            }
-            if (cd.PageSource.Contains("The connection was reset."))
-            {
-                connectionResetTimes++;
-                return true;
-            }
-            if (cd.PageSource.Contains("took too long to respond."))
-            {
-                tooLongToRespond++;
-                return true;
-            }
-
-
-            try
-            {
-                var mfe = FindLastOrDefaultElement(cd, "", "div", "main-frame-error");
-                if (mfe != null)
-                {
-                    mainFrameErrorTimes++;
-                    return true;
-                }
-            }
-            catch { }
-            return false;
-        }
-
-        static void isExceptionalError(string pageSource, string URL)
-        {
-            if (URL.StartsWith("blocked"))
-                throw new Exception("Proxy failed to fight through cencorship!");
-            if (pageSource.Contains("unexpectedly closed the connection."))
-                throw new Exception("Site unexpectedly closed the connection.");
-        }
-        #endregion
 
         #endregion
     }

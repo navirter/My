@@ -15,9 +15,12 @@ namespace My.Testing
             Web.Chrome.ChromeDriverHelper helper = null;
             try
             {
-                helper = Web.Chrome.chromedriver_set_up();
+                helper = Web.Chrome.chromedriver_set_up();                
                 if (helper == null)
                     Assert.Fail("Chrome is null created.");
+                var handles = helper.ChromeDriver.WindowHandles;
+                if (handles.Count == 0)
+                    Assert.Fail("No chrome handles");
             }
             catch(Exception e)
             {
@@ -26,7 +29,9 @@ namespace My.Testing
             try
             {
                 helper.Navigate("https://www.google.com/");
-                if (helper.CurrentUrl != "https://www.google.com/" || string.IsNullOrEmpty(helper.CurrentPageSource))
+                string page = helper.CurrentPageSource;
+                string uri = helper.CurrentUrl;
+                if (uri != "https://www.google.com/" || string.IsNullOrEmpty(page))
                     Assert.Fail("Can't navigate chrome");
             }
             catch(Exception e)
