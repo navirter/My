@@ -9,21 +9,63 @@ namespace My.Testing
     public class WebTesting
     {
         #region chromedriver
-        //[TestMethod]
-        //public void chromedriver_setup_dispose_setup()
+        [TestMethod]
+        public void chromedriver_setup_navigate_dispose_setup()
+        {
+            Web.Chrome.ChromeDriverHelper helper = null;
+            try
+            {
+                helper = Web.Chrome.chromedriver_set_up();
+                if (helper == null)
+                    Assert.Fail("Chrome is null created.");
+            }
+            catch(Exception e)
+            {
+                Assert.Fail("Can't create chrome: " + e.Message);
+            }
+            try
+            {
+                helper.Navigate("https://www.google.com/");
+                if (helper.CurrentUrl != "https://www.google.com/" || string.IsNullOrEmpty(helper.CurrentPageSource))
+                    Assert.Fail("Can't navigate chrome");
+            }
+            catch(Exception e)
+            {
+                Assert.Fail("Can't navigate chrome: " + e.Message);
+            }
+            try
+            {
+                Web.Chrome.chromedriver_dispose(helper);
+            }
+            catch (Exception e)
+            {
+                Assert.Fail("Can't dispose chrome: " + e.Message);
+            }
+        }
+        #endregion
+
+        //[TestClass]
+        //public class TorTesting
         //{
-        //    try
+        //    Web.Tor tor = null;
+
+        //    [TestMethod]
+        //    public void Initializate()
         //    {
-        //        Process chrome_process; int chrome_id = -1;
-        //        var x = Web.chromedriver_set_up(out chrome_process, out chrome_id, false);
-        //        Web.chromedriver_dispose(x, chrome_id);                
-        //        Assert.AreEqual(1, 1);
+        //        tor = new Web.Tor();
+        //        tor.Setup();
+        //        Assert.IsNotNull(tor.Driver);
         //    }
-        //    catch (Exception e)
+
+        //    [TestMethod]
+        //    public void TearDown()
         //    {
-        //        Assert.Fail(e.Message);
+        //        if (tor != null)
+        //        {
+        //            tor.Teardown();
+        //            Assert.IsNull(tor.Driver);
+        //        }
         //    }
         //}
-        #endregion
     }
 }

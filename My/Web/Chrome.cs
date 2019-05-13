@@ -24,6 +24,24 @@ namespace My.Web
         {
             public ChromeDriver ChromeDriver { get; set; }
             public List<string> AttachedProcessesIds { get; set; }
+
+            public string CurrentUrl
+            {
+                get
+                {
+                    return ChromeDriver.Url;
+                }
+                set
+                {
+                    ChromeDriver.Url = value;
+                }
+            }
+            public string CurrentPageSource { get { return ChromeDriver.PageSource; } }            
+
+            public void Navigate(string Url)
+            {
+                this.CurrentUrl = Url;
+            }
         }
 
         #region public static List<string> chromeDriversIds
@@ -135,7 +153,7 @@ namespace My.Web
                 //initialize chromedriver
                 var driverStartTime = Process.GetCurrentProcess().StartTime;
 
-                ChromeDriver chrome = new ChromeDriver(service, options);//cant instantize if onother cd exists for some reasons
+                ChromeDriver chrome = new ChromeDriver(service, options, new TimeSpan(0, 1, 0));
                 WaitSmoothly.Do(1.5);
                 //get chrome related processes after initialization. Can throw error that access denied. Dealt away with running as administaror
                 var latestChromeRelatedIds = Process.GetProcesses()
@@ -173,8 +191,13 @@ namespace My.Web
                 helper.ChromeDriver.Quit();
                 helper.AttachedProcessesIds.ForEach(s =>
                 {
-                    var proc = Process.GetProcessById(int.Parse(s));
-                    killProc(proc);
+                    try
+                    {
+                        var proc = Process.GetProcessById(int.Parse(s));
+                        killProc(proc);
+                    }
+                    catch(Exception e)
+                    { }
                 });
                 helper.AttachedProcessesIds = new List<string>();
                 File.WriteAllLines(Directory.GetCurrentDirectory() + "\\drivers.txt", chromeDriversIds);

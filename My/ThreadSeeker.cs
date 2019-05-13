@@ -873,7 +873,8 @@ namespace My
 
         private void button3_Click(object sender, EventArgs e)
         {
-            addMessage(textBox1.Text, "ThreadSeeker.manually", true, false, false);
+            addMessage("ThreadSeeker.manually", textBox1.Text, true, false, false);
+            textBox1.Text = "";
             somethingChanged(sender, e);
         }
         
