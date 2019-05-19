@@ -39,7 +39,7 @@ namespace My.Web
             {
                 this.CurrentUrl = URL;
             }
-            
+
             /// <summary>
             /// Smooth chrome navigation. Can be stopped.
             /// </summary>
@@ -93,7 +93,7 @@ namespace My.Web
                     throw new Exception("Cannot navigate chrome: " + e.Message);
                 }
             }
-            
+
             bool isContinuableError(ref int noInternetTimes, ref int connectionResetTimes, ref int mainFrameErrorTimes, ref int tooLongToRespond)
             {
                 var cd = ChromeDriver;
@@ -174,7 +174,7 @@ namespace My.Web
         public static List<ChromeDriverHelper> ChromeDriverHelpers { get; private set; } = new List<ChromeDriverHelper>();
         public static ChromeDriverHelper LastChromeDriverHelper { get { return ChromeDriverHelpers.LastOrDefault(); } }
         public static ChromeDriver LastChrome { get { return LastChromeDriverHelper.ChromeDriver; } }
-        
+
         #region setting up and disposal
 
         static string[] _processesToCheck = {
@@ -200,11 +200,12 @@ namespace My.Web
 
         #region  public static ChromeDriverHelper chromedriver_set_up
         /// <summary>
-        /// Returns a new chromedriver instance with given parameters, and saves its information.\n
+        /// Returns a new chromedriver instance with given parameters, and saves its information.
         /// Each set_up must be followed by dispose or disposeAll.
         /// It's possible that some other chrome tabs(even in normal browsers) created during execution of this function are closed at later disposal
         /// It's better off launching projects with this function as administrator.
-        /// To force so: create app.manifest and set it there <requestedExecutionLevel level = "requireAdministrator" uiAccess="false" />
+        /// To force so: create app.manifest and set it there: tag + "requestedExecutionLevel level = "requireAdministrator" uiAccess="false" />"
+        /// /**/
         /// </summary>
         /// <param name="visible">False if chrome must run silently</param>
         /// <param name="ignoreSetificateErrors"></param>
@@ -212,95 +213,93 @@ namespace My.Web
         /// <param name="proxyWithAuthentication"></param>
         /// <param name="extensionPaths">Leave it empty or null not to use a consistant chrome profile</param>
         /// <returns></returns>
-        public static ChromeDriverHelper chromedriver_set_up(bool visible = true, bool ignoreSetificateErrors = true
+        public static ChromeDriverHelper Chromedriver_set_up(bool visible = true, bool ignoreSetificateErrors = true
             , string[] extensionPaths = null, string proxyServer = "", bool proxyWithAuthentication = false)
         {
             try
-            {                
+            {
+                #region create service and options
                 //create instance
                 var service = ChromeDriverService.CreateDefaultService();
                 service.HideCommandPromptWindow = true;
                 var options = new ChromeOptions();
                 #region set options
-                options.AddArgument("--enable-extensions");
-                options.AddArgument("--start-maximized");
-                #region proxy
-                if (proxyServer != "")
+                try
                 {
-                    Proxy proxy = new Proxy()
+
+                    options.AddArgument("--enable-extensions");
+                    options.AddArgument("--start-maximized");
+                    #region proxy
+                    if (proxyServer != "")
                     {
-                        Kind = ProxyKind.Manual,
-                        IsAutoDetect = false,
-                        HttpProxy = proxyServer,//"127.0.0.1:3330",
-                        SslProxy = proxyServer//"127.0.0.1:3330"
-                    };
-                    options.Proxy = proxy;
-                    if (proxyWithAuthentication)
-                        options.AddArguments("--proxy-server=http://user:password@yourProxyServer.com:8080");
-                }
-                #endregion
-                #region set visibility
-                try
-                {
-                    if (!visible)
-                        options.AddArgument("headless");
+                        Proxy proxy = new Proxy()
+                        {
+                            Kind = ProxyKind.Manual,
+                            IsAutoDetect = false,
+                            HttpProxy = proxyServer,//"127.0.0.1:3330",
+                            SslProxy = proxyServer//"127.0.0.1:3330"
+                        };
+                        options.Proxy = proxy;
+                        if (proxyWithAuthentication)
+                            options.AddArguments("--proxy-server=http://user:password@yourProxyServer.com:8080");
+                    }
+                    #endregion
+                    #region set visibility
+                    try
+                    {
+                        if (!visible)
+                            options.AddArgument("headless");
+                    }
+                    catch (Exception e)
+                    {
+                        throw new Exception("Can't set visibility. " + e.Message);
+                    }
+                    #endregion
+                    #region set extensions
+                    try
+                    {
+                        if (extensionPaths != null)
+                            foreach (var extension in extensionPaths)
+                                if (!string.IsNullOrEmpty(extension))
+                                    options.AddArgument("--load-extension=" + extension);
+                        //options.AddExtension(extension);                            
+                    }
+                    catch (Exception e)
+                    {
+                        throw new Exception("Can't set chrome extensions: " + e.Message);
+                    }
+                    #endregion
+                    #region set ignore sertificate errors
+                    try
+                    {
+                        if (ignoreSetificateErrors)
+                            options.AddArgument("ignore-certificate-errors");
+                    }
+                    catch (Exception e)
+                    {
+                        throw new Exception("Can't set ignore certificate errors. " + e.Message);
+                    }
+                    #endregion
                 }
                 catch (Exception e)
-                {
-                    throw new Exception("Can't set visibility. " + e.Message);
-                }
-                #endregion
-                #region set extensions
-                try
-                {
-                    if (extensionPaths != null)
-                        foreach (var extension in extensionPaths)
-                            if (!string.IsNullOrEmpty(extension))
-                                options.AddArgument("--load-extension=" + extension);
-                    //options.AddExtension(extension);                            
-                }
-                catch (Exception e)
-                {
-                    throw new Exception("Can't set chrome extensions: " + e.Message);
-                }
-                #endregion
-                #region set ignore sertificate errors
-                try
-                {
-                    if (ignoreSetificateErrors)
-                        options.AddArgument("ignore-certificate-errors");
-                }
-                catch (Exception e)
-                {
-                    throw new Exception("Can't set ignore certificate errors. " + e.Message);
-                }
+                { throw new Exception("Can't set options: " + e.Message); }
                 #endregion
                 #endregion
                 
-                //get chrome related processes before initialization. Can throw error that access denied. Dealt away with running as administaror
-                var chromeRelatedIds = Process.GetProcesses()
-                    .Where(s => _processesToCheck.FirstOrDefault(x => s.ProcessName.ToLower().Contains(x)) != null)
-                    .ToList();
-                WaitSmoothly.Do(1.5);
+                var chromeRelatedIds = getChromeRelatedProcesses();
+                //WaitSmoothly.Do(1.5);
                 //initialize chromedriver
-                var driverStartTime = Process.GetCurrentProcess().StartTime;
-
                 ChromeDriver chrome = new ChromeDriver(service, options, new TimeSpan(0, 1, 0));
-                WaitSmoothly.Do(1.5);
+                //WaitSmoothly.Do(1.5);
                 //get chrome related processes after initialization. Can throw error that access denied. Dealt away with running as administaror
-                var latestChromeRelatedIds = Process.GetProcesses()
-                    .Where(s => _processesToCheck.FirstOrDefault(x => s.ProcessName.ToLower().Contains(x)) != null
-                    && s.StartTime > driverStartTime)
-                    .ToList();
-                WaitSmoothly.Do(1.5);
+                var latestChromeRelatedIds = getChromeRelatedProcesses();
+                //WaitSmoothly.Do(1.5);
                 //save newly created processes' ids to list
                 lastCreatedDriverIds = new List<string>();
-                latestChromeRelatedIds.ForEach(s =>
-                {
-                    var match = chromeRelatedIds.FirstOrDefault(a => a.Id == s.Id);
-                    if (match == null)//if there was no such chrome related id before initialization
-                        lastCreatedDriverIds.Add(s.Id.ToString());
-                });
+                lastCreatedDriverIds = latestChromeRelatedIds
+                    .Where(s => !chromeRelatedIds.Any(a => a.Id == s.Id))
+                    .Select(s => s.Id.ToString())
+                    .ToList();
                 //save new helper to list
                 var lastHelper = new ChromeDriverHelper() { ChromeDriver = chrome, AttachedProcessesIds = lastCreatedDriverIds };
                 ChromeDriverHelpers.Add(lastHelper);
@@ -313,9 +312,22 @@ namespace My.Web
                 throw new Exception(e.Message);
             }
         }
+        static List<Process> getChromeRelatedProcesses()
+        {
+            try
+            {
+                return Process.GetProcesses()
+                    .Where(s => _processesToCheck.FirstOrDefault(x => s.ProcessName.ToLower().Contains(x)) != null)
+                    .ToList();
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Can't get processes: " + e.Message);
+            }
+        }
         #endregion
 
-        public static void chromedriver_dispose(ChromeDriverHelper helper)
+        public static void Chromedriver_dispose(ChromeDriverHelper helper)
         {
             string ids = string.Join(", ", helper.AttachedProcessesIds);
             try
@@ -342,12 +354,12 @@ namespace My.Web
             }
         }
 
-        #region public static void chromedriver_disposeAll(int maximumTimeoutSeconds = 10)
+        #region public static void Chromedriver_disposeAll(int maximumTimeoutSeconds = 10)
         static int linesCounter = 0;
         static int linesCount = 0;
         delegate void voidProcessInt(Process process, int integer);
 
-        public static void chromedriver_disposeAllAsync(int maximumTimeoutSeconds = 10)
+        public static void Chromedriver_disposeAllAsync(int maximumTimeoutSeconds = 10)
         {
             string path = Directory.GetCurrentDirectory() + "\\drivers.txt";
             string[] lines = File.ReadAllLines(path);

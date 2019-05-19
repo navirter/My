@@ -15,7 +15,7 @@ namespace My.Testing
             Web.Chrome.ChromeDriverHelper helper = null;
             try
             {
-                helper = Web.Chrome.chromedriver_set_up();                
+                helper = Web.Chrome.Chromedriver_set_up();                
                 if (helper == null)
                     Assert.Fail("Chrome is null created.");
                 var handles = helper.ChromeDriver.WindowHandles;
@@ -40,7 +40,7 @@ namespace My.Testing
             }
             try
             {
-                Web.Chrome.chromedriver_dispose(helper);
+                Web.Chrome.Chromedriver_dispose(helper);
             }
             catch (Exception e)
             {
