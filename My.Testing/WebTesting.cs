@@ -26,12 +26,13 @@ namespace My.Testing
             {
                 Assert.Fail("Can't create chrome: " + e.Message);
             }
+            string uri = "https://www.google.com/";
             try
             {
-                helper.Navigate("https://www.google.com/");
-                string page = helper.CurrentPageSource;
-                string uri = helper.CurrentUrl;
-                if (uri != "https://www.google.com/" || string.IsNullOrEmpty(page))
+                helper.Navigate(uri);
+                string page = helper.CurrentChromeDriverInfo.PageSource;
+                string currentUri = helper.CurrentChromeDriverInfo.UrlAfter;
+                if (currentUri != uri || string.IsNullOrEmpty(page) || page == "data;,")
                     Assert.Fail("Can't navigate chrome");
             }
             catch(Exception e)

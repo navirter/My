@@ -440,7 +440,9 @@ namespace My
             {
                 ThreadSeeker.addMessage(particularPart, "start", false, system);
             }
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
             public static void NotNeeded(string particularPart, bool system = true)
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
             {
                 ThreadSeeker.addMessage( particularPart, "not needed", false, system);
             }

@@ -1,5 +1,6 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Remote;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -31,22 +32,59 @@ namespace My.Web
                     ChromeDriver.Url = value;
                 }
             }
-            public string CurrentPageSource { get { return ChromeDriver.PageSource; } }
+            public class ChromeDriverInfo
+            {
+                public ChromeDriverInfo(bool HasApplicationCache, ICapabilities Capabilities, IReadOnlyCollection<string> WindowHandles
+                    , string CurrentWindowHandle, IFileDetector FileDetector, bool HasLocationContext, bool HasWebStorage
+                    , bool IsActionExecutor, string PageSource, SessionId SessionID, string Title, string Url)
+                {
+                    this.HasApplicationCache = HasApplicationCache;
+                    this.Capabilities = Capabilities;
+                    this.WindowHandles = WindowHandles;
+                    this.CurrentWindowHandle = CurrentWindowHandle;
+                    this.FileDetector = FileDetector;
+                    this.HasLocationContext = HasLocationContext;
+                    this.HasWebStorage = HasWebStorage;
+                    this.IsActionExecutor = IsActionExecutor;
+                    //var locationContext = ChromeDriver.LocationContext;
+                    //var networkConditions = ChromeDriver.NetworkConditions;
+                    this.PageSource = PageSource;
+                    this.SessionID = SessionID;
+                    this.Title = Title;
+                    this.UrlBefore = Url;
+                    //var webStorage = ChromeDriver.WebStorage;
+                }
+                public bool HasApplicationCache { get; private set; }
+                public ICapabilities Capabilities { get; private set; }
+                public IReadOnlyCollection<string> WindowHandles { get; private set; }
+                public string CurrentWindowHandle { get; private set; }
+                public IFileDetector FileDetector { get; private set; }
+                public bool HasLocationContext { get; private set; }
+                public bool HasWebStorage { get; private set; }
+                public bool IsActionExecutor { get; private set; }
+                //var locationContext = ChromeDriver.LocationContext;
+                //var networkConditions = ChromeDriver.NetworkConditions;
+                public string PageSource { get; private set; }
+                public SessionId SessionID { get; private set; }
+                public string Title { get; private set; }
+                public string UrlBefore { get; private set; }
+                public string UrlAfter { get; internal set; }
+            }
+            public ChromeDriverInfo CurrentChromeDriverInfo { get; private set; }
+
             #endregion
 
-            #region Navigate(URL or smoothly with parameters)
+            #region Navigate
             public void Navigate(string URL)
             {
-                this.CurrentUrl = URL;
+                Navigate(URL, 1, 1);
             }
 
             /// <summary>
             /// Smooth chrome navigation. Can be stopped.
             /// </summary>
-            /// <param name="cd"></param>
             /// <param name="URL"></param>
             /// <param name="delaySeconds"></param>
-            /// <param name="stop"></param>
             /// <param name="tryouts"></param>
             /// <returns></returns>
             public bool Navigate(string URL, double delaySeconds, int tryouts = 3)
@@ -63,14 +101,30 @@ namespace My.Web
                 {
                     //toleratable errors counters
                     int noInternetTimes = 0, connectionResetTimes = 0, mainFrameErrorTimes = 0, tooLongToRespondTimes = 0;
+                    var cd = ChromeDriver;
                     for (int i = 0; i < tryouts; i++)
                     {
+                        #region selectFirstWindowHandle
+                        try
+                        {
+                            var currentWindowHandle = cd.CurrentWindowHandle;
+                        }
+                        catch
+                        {
+                            SelectFirstChromeWindowHandle();
+                        }
+                        #endregion
+                        this.CurrentChromeDriverInfo = new ChromeDriverInfo(cd.HasApplicationCache, cd.Capabilities,
+                            cd.WindowHandles, cd.CurrentWindowHandle, cd.FileDetector, cd.HasLocationContext,
+                            cd.HasWebStorage, cd.IsActionExecutor, cd.PageSource, cd.SessionId, cd.Title, cd.Url);
+
                         #region tryout logic = navigation + checking for stop, taleratable errors, and exceptional errors                                 
-                        ChromeDriver.Url = URL;
+                        this.CurrentUrl = URL;
+                        CurrentChromeDriverInfo.UrlAfter = URL;
                         WaitSmoothly.Do(delaySeconds);
                         if (ThreadSeeker.Stop) return false;
 
-                        isExceptionalError(ChromeDriver.PageSource, ChromeDriver.Url);
+                        isExceptionalError(cd.PageSource, cd.Url);
                         if (isContinuableError(ref noInternetTimes, ref connectionResetTimes, ref mainFrameErrorTimes, ref tooLongToRespondTimes))
                             continue;
                         #endregion
@@ -136,6 +190,13 @@ namespace My.Web
             #endregion
 
             #region useful functionality for chromedriver
+
+            public void SelectFirstChromeWindowHandle()
+            {
+                var cd = ChromeDriver;
+                string window = cd.WindowHandles.First();
+                cd = cd.SwitchTo().Window(window) as ChromeDriver;
+            }
 
             /// <summary>
             /// At least 1 parameter must not be empty. Serches by Id first, then by tag, then by text. In the last case it returns the first occurence
