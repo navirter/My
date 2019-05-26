@@ -75,6 +75,7 @@
     <Compile Include="IOTesting.cs" />
     <Compile Include="SortingTesting.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WaitSmootlyTesting.cs" />
     <Compile Include="WebTesting.cs" />
   </ItemGroup>
   <ItemGroup>

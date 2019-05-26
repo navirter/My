@@ -388,21 +388,22 @@ namespace My
         /// </summary>
         public static string CurrentActivity { get; set; } = "";
         public static string CurrentActivityToolTip { get; set; } = "";
-        #region public static bool pause
-        /// <summary>
-        /// valuable for managing user set pauses in application
-        /// </summary>
-        public static bool pause { get; private set; } = false;
-        public static void pause_set(bool value)
+        public static bool Pause
         {
-            pause = value;
-            if (value)
-                pause_button.Text = "||";
-            else
-                pause_button.Text = ">";
+            get
+            {
+                return WaitSmoothly.Pause;
+            }
+            set
+            {
+                WaitSmoothly.Pause = value;
+                if (value)
+                    pause_button.Text = "||";
+                else
+                    pause_button.Text = ">";
+            }
         }
-        #endregion
-        public static bool Stop { get; set; } = false;
+        public static bool Stop { get { return WaitSmoothly.Stop; } set { WaitSmoothly.Stop = value; } }
 
         static TimeSpan _sleptTime { get; set; } = new TimeSpan();
         static DateTime _start = DateTime.Now;
@@ -763,7 +764,7 @@ namespace My
                     {
                         var idle = Diagnostics.getIdleTime();
                         if (idle > new TimeSpan(1, 30, 0))
-                            pause = false;
+                            Pause = false;
                     }
                     if (_closing) return;
                     Thread.Sleep(1000);
@@ -925,10 +926,10 @@ namespace My
         private void button4_Click(object sender, EventArgs e)
         {
             if (button4.Text == ">")
-                pause_set(true);
+                Pause = true;
 
             else
-                pause_set(false);
+                Pause = false;
         }
         private void numericUpDown1_ValueChanged(object sender, EventArgs e)
         {
@@ -963,7 +964,7 @@ namespace My
             if (dr == DialogResult.Yes)
             {
                 Stop = true;
-                pause_set(false);
+                Pause = false;
             }
         }
 

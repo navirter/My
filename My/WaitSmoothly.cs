@@ -10,22 +10,36 @@ namespace My
 {
     public static class WaitSmoothly
     {
-        public static void Do(double seconds)
+        public static bool Stop = false;
+        public static bool Pause = false;
+
+        public static TimeSpan Do(double secondsMin, double secondsMax)
         {
-            for (double i = 0.1; i < seconds; i += 0.1)
+            int min = Convert.ToInt32(secondsMin);
+            int max = Convert.ToInt32(secondsMax);
+            int x = new Random().Next(min, max);
+            return Do(x);
+        }
+
+        public static TimeSpan Do(double seconds)
+        {
+            DateTime start = DateTime.Now;
+            DateTime target = start.AddSeconds(seconds);
+            while (DateTime.Now < target)
             {
                 Application.DoEvents();
-                Thread.Sleep(100);
+                //Thread.Sleep(250);//instashutdown
                 if (ThreadSeeker.Stop)
-                    return;
+                    return DateTime.Now - start;
             }
-            while (ThreadSeeker.pause)
+            while (Pause)
             {
                 if (ThreadSeeker.Stop)
-                    return;
+                    return DateTime.Now - start;
                 Application.DoEvents();
-                Thread.Sleep(100);
+                //Thread.Sleep(250);//instashutdown
             }
-        }        
+            return DateTime.Now - start;
+        }
     }
 }

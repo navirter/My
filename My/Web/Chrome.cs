@@ -1,4 +1,5 @@
 ﻿using OpenQA.Selenium;
+using OpenQA.Selenium.Html5;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Remote;
 using System;
@@ -35,24 +36,106 @@ namespace My.Web
             public class ChromeDriverInfo
             {
                 public ChromeDriverInfo(bool HasApplicationCache, ICapabilities Capabilities, IReadOnlyCollection<string> WindowHandles
-                    , string CurrentWindowHandle, IFileDetector FileDetector, bool HasLocationContext, bool HasWebStorage
-                    , bool IsActionExecutor, string PageSource, SessionId SessionID, string Title, string Url)
+                    , string CurrentWindowHandle, IFileDetector FileDetector, bool HasLocationContext, bool HasWebStorage, bool IsActionExecutor,
+                     string PageSource, SessionId SessionID, string Title, string Url)
                 {
-                    this.HasApplicationCache = HasApplicationCache;
-                    this.Capabilities = Capabilities;
-                    this.WindowHandles = WindowHandles;
-                    this.CurrentWindowHandle = CurrentWindowHandle;
-                    this.FileDetector = FileDetector;
-                    this.HasLocationContext = HasLocationContext;
-                    this.HasWebStorage = HasWebStorage;
-                    this.IsActionExecutor = IsActionExecutor;
-                    //var locationContext = ChromeDriver.LocationContext;
-                    //var networkConditions = ChromeDriver.NetworkConditions;
-                    this.PageSource = PageSource;
-                    this.SessionID = SessionID;
-                    this.Title = Title;
-                    this.UrlBefore = Url;
-                    //var webStorage = ChromeDriver.WebStorage;
+
+                    #region hasApplicationCache
+                    try
+                    {
+                        this.HasApplicationCache = false;
+                        this.HasApplicationCache = HasApplicationCache;
+                    }
+                    catch { }
+                    #endregion
+                    #region capabilities
+                    try
+                    {
+                        this.Capabilities = null;
+                        this.Capabilities = Capabilities;
+                    }
+                    catch { }
+                    #endregion
+                    #region windowHandles
+                    try
+                    {
+                        this.WindowHandles = null;
+                        this.WindowHandles = WindowHandles;
+                    }
+                    catch { }
+                    #endregion
+                    #region currentWindowHandle
+                    try
+                    {
+                        this.CurrentWindowHandle = null;
+                        this.CurrentWindowHandle = CurrentWindowHandle;
+                    }
+                    catch { }
+                    #endregion
+                    #region fileDetector
+                    try
+                    {
+                        this.FileDetector = null;
+                        this.FileDetector = FileDetector;
+                    }
+                    catch { }
+                    #endregion
+                    #region hasLocationContext
+                    try
+                    {
+                        this.HasLocationContext = false;
+                        this.HasLocationContext = HasLocationContext;
+                    }
+                    catch { }
+                    #endregion
+                    #region hasWebStorage
+                    try
+                    {
+                        this.HasWebStorage = false;
+                        this.HasWebStorage = HasWebStorage;
+                    }
+                    catch { }
+                    #endregion
+                    #region isActionExecutor
+                    try
+                    {
+                        this.IsActionExecutor = false;
+                        this.IsActionExecutor = IsActionExecutor;
+                    }
+                    catch { }
+                    #endregion
+                    #region pageSource
+                    try
+                    {
+                        this.PageSource = null;
+                        this.PageSource = PageSource;
+                    }
+                    catch { }
+                    #endregion
+                    #region sessionId
+                    try
+                    {
+                        this.SessionID = null;
+                        this.SessionID = SessionID;
+                    }
+                    catch { }
+                    #endregion
+                    #region title
+                    try
+                    {
+                        this.Title = null;
+                        this.Title = Title;
+                    }
+                    catch { }
+                    #endregion
+                    #region UrlBefore
+                    try
+                    {
+                        this.UrlBefore = null;
+                        this.UrlBefore = Url;
+                    }
+                    catch { }
+                    #endregion
                 }
                 public bool HasApplicationCache { get; private set; }
                 public ICapabilities Capabilities { get; private set; }
@@ -62,13 +145,14 @@ namespace My.Web
                 public bool HasLocationContext { get; private set; }
                 public bool HasWebStorage { get; private set; }
                 public bool IsActionExecutor { get; private set; }
-                //var locationContext = ChromeDriver.LocationContext;
-                //var networkConditions = ChromeDriver.NetworkConditions;
+                //public ILocationContext LocationContext { get; set; }
+                //public ChromeNetworkConditions NetworkConditions { get; set; }
                 public string PageSource { get; private set; }
                 public SessionId SessionID { get; private set; }
                 public string Title { get; private set; }
                 public string UrlBefore { get; private set; }
                 public string UrlAfter { get; internal set; }
+                //public IWebStorage WebStorage { get; set; }
             }
             public ChromeDriverInfo CurrentChromeDriverInfo { get; private set; }
 
@@ -104,16 +188,6 @@ namespace My.Web
                     var cd = ChromeDriver;
                     for (int i = 0; i < tryouts; i++)
                     {
-                        #region selectFirstWindowHandle
-                        try
-                        {
-                            var currentWindowHandle = cd.CurrentWindowHandle;
-                        }
-                        catch
-                        {
-                            SelectFirstChromeWindowHandle();
-                        }
-                        #endregion
                         this.CurrentChromeDriverInfo = new ChromeDriverInfo(cd.HasApplicationCache, cd.Capabilities,
                             cd.WindowHandles, cd.CurrentWindowHandle, cd.FileDetector, cd.HasLocationContext,
                             cd.HasWebStorage, cd.IsActionExecutor, cd.PageSource, cd.SessionId, cd.Title, cd.Url);
@@ -244,11 +318,13 @@ namespace My.Web
         "conhost"};
         #region public static List<string> chromeDriversIds
         static List<string> lastCreatedDriverIds = new List<string>();
+#pragma warning disable IDE1006 // Naming Styles
         ///filled at chromedriver initialization
         /// <summary>
         /// All attached processes of all helpers
         /// </summary>
         public static List<string> chromeDriversIds
+#pragma warning restore IDE1006 // Naming Styles
         {
             get
             {
@@ -401,7 +477,7 @@ namespace My.Web
                         var proc = Process.GetProcessById(int.Parse(s));
                         killProc(proc);
                     }
-                    catch(Exception e)
+                    catch
                     { }
                 });
                 helper.AttachedProcessesIds = new List<string>();
