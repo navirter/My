@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Update="Loading_progress.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Loading_progress.Designer.cs">
+      <DependentUpon>Loading_progress.cs</DependentUpon>
+    </Compile>
+    <Compile Update="ThreadSeeker.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="ThreadSeeker.Designer.cs">
+      <DependentUpon>ThreadSeeker.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Loading_progress.resx">
+      <DependentUpon>Loading_progress.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="ThreadSeeker.resx">
+      <DependentUpon>ThreadSeeker.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>
