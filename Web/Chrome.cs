@@ -329,6 +329,15 @@ namespace My.Web
 
             #endregion
         }
+        public class ChromeDriverSetUpOptions
+        {
+            public bool Visible = true;
+            public bool IgnoreSertivicateErrors = true;
+            public string[] ExtensionsPaths = null;
+            public string ProxyServer = null;
+            public string ProxyLogin = null;
+            public string ProxyPassword = null;
+        }
 
         public static List<ChromeDriverHelper> ChromeDriverHelpers { get; private set; } = new List<ChromeDriverHelper>();
         public static ChromeDriverHelper LastChromeDriverHelper { get { return ChromeDriverHelpers.LastOrDefault(); } }
@@ -361,6 +370,7 @@ namespace My.Web
         #endregion
 
         #region  public static ChromeDriverHelper chromedriver_set_up
+          
         /// <summary>
         /// Returns a new chromedriver instance with given parameters, and saves its information.
         /// Each set_up must be followed by dispose or disposeAll.
@@ -375,8 +385,7 @@ namespace My.Web
         /// <param name="proxyWithAuthentication"></param>
         /// <param name="extensionPaths">Leave it empty or null not to use a consistant chrome profile</param>
         /// <returns></returns>
-        public static ChromeDriverHelper Chromedriver_set_up(bool visible = true, bool ignoreSetificateErrors = true
-            , string[] extensionPaths = null, string proxyServer = "", bool proxyWithAuthentication = false)
+        public static ChromeDriverHelper ChromedriverSetUp(ChromeDriverSetUpOptions setUpOptions)
         {
             try
             {
@@ -392,24 +401,24 @@ namespace My.Web
                     options.AddArgument("--enable-extensions");
                     options.AddArgument("--start-maximized");
                     #region proxy
-                    if (proxyServer != "")
+                    if (setUpOptions.ProxyServer != "")
                     {
                         Proxy proxy = new Proxy()
                         {
                             Kind = ProxyKind.Manual,
                             IsAutoDetect = false,
-                            HttpProxy = proxyServer,//"127.0.0.1:3330",
-                            SslProxy = proxyServer//"127.0.0.1:3330"
+                            SocksUserName = setUpOptions.ProxyLogin != null ? setUpOptions.ProxyLogin : "",
+                            SocksPassword = setUpOptions.ProxyPassword != null ? setUpOptions.ProxyPassword : "",
+                            HttpProxy = setUpOptions.ProxyServer,//"127.0.0.1:3330",
+                            SslProxy = setUpOptions.ProxyServer//"127.0.0.1:3330"
                         };
                         options.Proxy = proxy;
-                        if (proxyWithAuthentication)
-                            options.AddArguments("--proxy-server=http://user:password@yourProxyServer.com:8080");
                     }
                     #endregion
                     #region set visibility
                     try
                     {
-                        if (!visible)
+                        if (!setUpOptions.Visible)
                             options.AddArgument("headless");
                     }
                     catch (Exception e)
@@ -420,8 +429,8 @@ namespace My.Web
                     #region set extensions
                     try
                     {
-                        if (extensionPaths != null)
-                            foreach (var extension in extensionPaths)
+                        if (setUpOptions.ExtensionsPaths != null)
+                            foreach (var extension in setUpOptions.ExtensionsPaths)
                                 if (!string.IsNullOrEmpty(extension))
                                     options.AddArgument("--load-extension=" + extension);
                         //options.AddExtension(extension);                            
@@ -434,7 +443,7 @@ namespace My.Web
                     #region set ignore sertificate errors
                     try
                     {
-                        if (ignoreSetificateErrors)
+                        if (setUpOptions.IgnoreSertivicateErrors)
                             options.AddArgument("ignore-certificate-errors");
                     }
                     catch (Exception e)
