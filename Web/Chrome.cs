@@ -490,7 +490,7 @@ namespace My.Web
         }
         #endregion
 
-        public static void Chromedriver_dispose(ChromeDriverHelper helper)
+        public static void ChromedriverDispose(ChromeDriverHelper helper)
         {
             string ids = string.Join(", ", helper.AttachedProcessesIds);
             try
@@ -522,7 +522,7 @@ namespace My.Web
         static int linesCount = 0;
         delegate void voidProcessInt(Process process, int integer, bool fromFile);
 
-        public static void Chromedriver_disposeAllAsync(int maximumTimeoutSeconds = 10)
+        public static void ChromedriverDisposeAll(int maximumTimeoutSeconds = 10)
         {
             #region kill processes from file
             try

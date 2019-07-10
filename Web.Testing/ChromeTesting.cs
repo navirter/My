@@ -39,7 +39,7 @@ namespace My.Web.Testing
                 }
                 try
                 {
-                    Web.Chrome.Chromedriver_dispose(helper);
+                    Web.Chrome.ChromedriverDispose(helper);
                 }
                 catch (Exception e)
                 {
@@ -88,7 +88,7 @@ namespace My.Web.Testing
                 }
                 try
                 {
-                    Web.Chrome.Chromedriver_dispose(helper);
+                    Web.Chrome.ChromedriverDispose(helper);
                 }
                 catch (Exception e)
                 {
@@ -101,7 +101,7 @@ namespace My.Web.Testing
             {
                 try
                 {
-                    Web.Chrome.Chromedriver_disposeAllAsync();
+                    Web.Chrome.ChromedriverDisposeAll();
                 }
                 catch (Exception e)
                 {

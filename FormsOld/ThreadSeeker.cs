@@ -678,8 +678,12 @@ namespace My.Forms
             }
             catch(Exception e)
             {
-                listView1.Items.Clear();
-                listView1.Items.Add("Can't exhibite threads: " + e.Message);
+                try
+                {
+                    listView1.Items.Clear();
+                    listView1.Items.Add("Can't exhibite threads: " + e.Message);
+                }
+                catch { }
             }
         }
         bool checking(Unit unit, string[] requests, string[] antirequests)
