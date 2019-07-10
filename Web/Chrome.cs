@@ -16,7 +16,7 @@ using My.Waiting;
 
 namespace My.Web
 {
-    public class Chrome
+    public class Chrome 
     {
         public class ChromeDriverHelper
         {
