@@ -290,7 +290,11 @@ namespace My.Forms
             _closing = true;            
             try { _threadRenewData.Abort(); } catch { }
             try { _threadRenewSleepAndCurrentActivity.Abort(); } catch { }
-            Dispose(true);
+            try
+            {
+                Dispose(true);
+            }
+            catch { }
         }
         ~ThreadSeeker()
         {
