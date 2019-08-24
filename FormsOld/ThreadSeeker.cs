@@ -47,14 +47,80 @@ namespace My.Forms
             Right, 
             Fill
         }
+
+        public class Settings
+        {
+            public readonly Form Owner = null;
+            public List<ThreadSeekerColorisationSetting> Colorization = null;
+
+            #region public int DangerMemoryLoadoutMegabytes = 1000 and must be >0
+            public int DangerMemoryLoadoutMegabytes
+            {
+                get
+                {
+                    return dangerMemoryLoadoutMegabytes;
+                }
+                set
+                {
+                    if (value <= 0)
+                        throw new IndexOutOfRangeException("dangerMemoryLoadoutMegabytes cannot be 0 or less!");
+                    dangerMemoryLoadoutMegabytes = value;
+                }
+            }
+            int dangerMemoryLoadoutMegabytes = 1000;
+            #endregion
+            #region public int ReshowDelaySeconds = 30 and must be > 0
+            public int ReshowDelaySeconds
+            {
+                get
+                {
+                    return reshowDelaySeconds;
+                }
+                set
+                {
+                    if (value <= 0)
+                        throw new IndexOutOfRangeException("No int can be qual or less that 0");
+                    reshowDelaySeconds = value;
+                }
+            }
+            int reshowDelaySeconds = 30;
+            #endregion
+            #region public Graphics Graphics = null;
+            public Graphics Graphics
+            {
+                get
+                {
+                    return graphics;
+                }
+                set
+                {
+                    graphics = value;
+                }
+            }
+            Graphics graphics = null;
+            #endregion
+            public bool ShowSleepingInfo = false;
+            public int UnpaseIfIdleMinutes = 1000000;
+            public bool StartTimeframeRecalibration = false;
+            public bool ShowIllClosedMessage = false;
+
+            public Settings(Form owner, List<ThreadSeekerColorisationSetting> colorization)
+            {
+                Owner = owner ?? throw new NullReferenceException("owner cannot be null!");
+                Colorization = colorization ?? throw new NullReferenceException("colorization cannot be null!");
+                if(colorization.Any(s => s == null))
+                    throw new NullReferenceException("colorization cannot be null!");
+            }
+        }
+
         public class Graphics
         {
             public int PositionX = 0;
             public int PositionY = 0;
             [Range(350, 50000)]
-            public int Width = 0;
+            public int Width = 350;
             [Range(600, 50000)]
-            public int Height = 0;
+            public int Height = 600;
             public AnchorStyles Anchors;
             public Side Side;
 
@@ -69,6 +135,7 @@ namespace My.Forms
                 this.Side = side;
             }
         }
+
         public class Unit
         {
             public DateTime dateTime;
@@ -167,59 +234,36 @@ namespace My.Forms
 
         #region (un)initialisation
 
-        #region initialization fields
-        public bool initialized { get; private set; } = false;
-        Form _owner { get; set; }
-        static Button pause_button = null;
-        List<ThreadSeekerColorisationSetting> threadSeekerColorisationSettings = new List<ThreadSeekerColorisationSetting>();
-        #endregion
+        
 
-        public ThreadSeeker(ThreadSeekerColorisationSetting[] colorizationSettings, int reshowDelaySec
-            , int dangerMemoryLoadMB, Graphics graphics, Form owner,
-            bool showSleepingInfo = false, bool unpauseIfIdle = false, bool pressRecalibrationAtStart = false)
+        public ThreadSeeker(Settings settings)
         {
             CheckForIllegalCrossThreadCalls = false;
-            #region validation
-            if (colorizationSettings == null || colorizationSettings.Contains(null))
-                throw new NullReferenceException("ColorizationSettings cannot be null");
-            if (_reshowDelay <= 0 || dangerMemoryLoadMB <= 0)
-                throw new IndexOutOfRangeException("No int can be qual or less that 0");
-            if (graphics.Width < 350 || graphics.Height < 600)
-                throw new ArgumentOutOfRangeException("Width must be >= 350 and Heigh >= 600");
-            if (owner == null)
-                throw new ArgumentNullException("Owner can't be null");
-            #endregion
-            #region launch and initialisations
-            threadSeekerColorisationSettings = colorizationSettings.ToList();
-            _reshowDelay = reshowDelaySec;
-            _dangerMemoryMB = dangerMemoryLoadMB;
+            this.settings = settings;
+            #region launch and initialisations         
             #region graphics
-            int x = graphics.PositionX;
+            var g = settings.Graphics;
+            int x = g.PositionX;
             if (x <= 0) x = 0;
-            int y = graphics.PositionY;
+            int y = g.PositionY;
             if (y <= 0) y = 0;
-            if (graphics.Side == Side.Left)
-                x = graphics.PositionX;
-            else if (graphics.Side == Side.Right)            
-                x = owner.Width - x;              
+            if (g.Side == Side.Left)
+                x = g.PositionX;
+            else if (g.Side == Side.Right)            
+                x = settings.Owner.Width - x;              
             
             this.Location = new System.Drawing.Point(x, y);
-            if (graphics.Side == Side.Fill)
+            if (g.Side == Side.Fill)
                 this.Dock = DockStyle.Fill;
-            this.Size = new System.Drawing.Size(graphics.Width, graphics.Height);
-            this.Anchor = graphics.Anchors;
-            _owner = owner; _owner.Controls.Add(this);
+            this.Size = new System.Drawing.Size(g.Width, g.Height);
+            this.Anchor = g.Anchors;
+            settings.Owner.Controls.Add(this);
             InitializeComponent();
             this.Show();
             #endregion
-            if (pressRecalibrationAtStart)
+            if (settings.StartTimeframeRecalibration)
                 button5.PerformClick();
-            if (colorizationSettings != null)
-            _dangerMemoryMB = dangerMemoryLoadMB;
-            ThreadSeeker.ShowSleepingInfo = showSleepingInfo;
-            _launchIfIdle = unpauseIfIdle;
             _start = DateTime.Now;
-            _reshowDelay = reshowDelaySec;
             #endregion
             #region read things
             _threads = new List<List<Unit>>();
@@ -246,24 +290,9 @@ namespace My.Forms
                     }
                 }
             }
-            #endregion
-            #region if closed correctly             
-            bool closedCorrectly = false;
-            for (int i = _threads.Count - 1; i >= 0; i--)
-            {
-                for (int j = _threads[i].Count - 1; j >= 0; j--)
-                {
-                    if (_threads[i][j].part.Contains("ThreadSeeker.closing"))
-                    {
-                        closedCorrectly = true;
-                        break;
-                    }
-                    if (_threads[i][j].part.Contains("ThreadSeeker.start"))
-                        break;
-                }
-            }
-            if (!closedCorrectly) MessageBox.Show("Программа не была закрыта корректно");
-            #endregion
+            #endregion     
+            if (settings.ShowIllClosedMessage)
+                manageUnpropperClosing();
             initialized = true;
             #region manage threads
             try { _threadRenewData.Abort(); } catch { }
@@ -279,6 +308,24 @@ namespace My.Forms
             string part = "ThreadSeeker.start";
             addMessage(part, "__________________________________________________", true);
             addMessage(part, "Логгер запущен", true, false, true);
+        }
+        void manageUnpropperClosing()
+        {
+            bool closedCorrectly = false;
+            for (int i = _threads.Count - 1; i >= 0; i--)
+            {
+                for (int j = _threads[i].Count - 1; j >= 0; j--)
+                {
+                    if (_threads[i][j].part.Contains("ThreadSeeker.closing"))
+                    {
+                        closedCorrectly = true;
+                        break;
+                    }
+                    if (_threads[i][j].part.Contains("ThreadSeeker.start"))
+                        break;
+                }
+            }
+            if (!closedCorrectly) MessageBox.Show("Программа не была закрыта корректно");
         }
         
         /// <summary>
@@ -398,10 +445,13 @@ namespace My.Forms
         public static bool Pause = false;
         public static bool Stop = false;
 
+
+        public Settings settings = null;
+        public bool initialized { get; private set; } = false;
+
+        static Button pause_button = null;
         static TimeSpan _sleptTime { get; set; } = new TimeSpan();
         static DateTime _start = DateTime.Now;
-        static int _dangerMemoryMB = 750;
-        static bool _launchIfIdle = false;
         static bool _somethingChanged = false;
         static List<Process> _additionalProcessesToConsider = new List<Process>();
 
@@ -409,11 +459,12 @@ namespace My.Forms
 
         static bool _showDetailedInfo = false;
         static bool _showImportantOnly = false;
-        static int _reshowDelay = 15;
-        static bool _closing = false;        
+        static bool _closing = false;
 
         Thread _threadRenewData;
         Thread _threadRenewSleepAndCurrentActivity;
+
+
 
         #region delegates
         delegate void voidstringstringbool(string s1, string s2, bool b, bool system, bool isCurrentActivity);
@@ -656,9 +707,7 @@ namespace My.Forms
                             elem.ForeColor = Color.Purple;
                             continue;
                         }
-                        if (threadSeekerColorisationSettings == null)
-                            continue;
-                        foreach (var v in threadSeekerColorisationSettings)
+                        foreach (var v in settings.Colorization)
                         {
                             string[] parts = res[a].Split(new[] { "]" }, StringSplitOptions.None);
                             string p0 = parts[0].ToLower() + "]";
@@ -747,20 +796,18 @@ namespace My.Forms
                             tb_CurrentActivity.Text = tb_CurrentActivity.Text.Remove(tb_CurrentActivity.Text.IndexOf("(сон"));
                         tb_CurrentActivity.Text += sleepstring;
                     }
-                    if (_launchIfIdle)
-                    {
-                        var idle = My.Diagnostics.GetIdleTime.Do();
-                        if (idle > new TimeSpan(1, 30, 0))
-                            Pause = false;
-                    }
+                    var idle = My.Diagnostics.GetIdleTime.Do();
+                    if (settings.UnpaseIfIdleMinutes > 0 &&
+                        idle > new TimeSpan(0, settings.UnpaseIfIdleMinutes, 0))
+                        Pause = false;
                     if (_closing) return;
                     Thread.Sleep(1000);
                 }
                 catch { return; }
-        }       
+        }
         void sleep()
         {
-            for (int i = 0; i < _reshowDelay; i++)
+            for (int i = 0; i < settings.ReshowDelaySeconds; i++)
             {
                 Thread.Sleep(1000);        
                     if (_somethingChanged || _closing)
