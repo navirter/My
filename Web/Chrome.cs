@@ -337,6 +337,7 @@ namespace My.Web
             public string ProxyServer = null;
             public string ProxyLogin = null;
             public string ProxyPassword = null;
+            public TimeSpan CommandTimeout = new TimeSpan();
         }
 
         public static List<ChromeDriverHelper> ChromeDriverHelpers { get; private set; } = new List<ChromeDriverHelper>();
@@ -460,7 +461,12 @@ namespace My.Web
                 var chromeRelatedIds = getChromeRelatedProcesses();
                 //WaitSmoothly.Do(1.5);
                 //initialize chromedriver
-                ChromeDriver chrome = new ChromeDriver(service, options, new TimeSpan(0, 1, 0));
+
+                ChromeDriver chrome = null;
+                if (setUpOptions.CommandTimeout != new TimeSpan())
+                    chrome = new ChromeDriver(service, options, setUpOptions.CommandTimeout);
+                else
+                    chrome = new ChromeDriver(service, options);
                 //chrome.Manage().Cookies.DeleteAllCookies();
                 Wait.Do(1.5);
                 //get chrome related processes after initialization. Can throw error that access denied. Dealt away with running as administaror
