@@ -28,7 +28,8 @@ namespace My.Web
             {
                 get
                 {
-                    return ChromeDriver.Url;
+                    string url = ChromeDriver.Url;
+                    return url;
                 }
                 set
                 {
@@ -171,11 +172,25 @@ namespace My.Web
 
             public bool NavigateIfNewPage(string URL, double delaySeconds, int tryouts = 1)
             {
-                bool newPage = this.ChromeDriver.Url == URL;
-                if (newPage)
+                validate(URL, delaySeconds, tryouts);
+                string curUrl = this.CurrentUrl;
+                if (curUrl != URL)
                     return Navigate(URL, delaySeconds, tryouts);
                 else
                     return true;
+            }
+
+            void validate(string URL, double delaySeconds, int tryouts)
+            {
+                if (this.ChromeDriver is null)
+                    throw new NullReferenceException("ChromeDriver is null!");
+                string currentUrl = this.CurrentUrl;
+                if (currentUrl is null)
+                    throw new NullReferenceException("ChromeDriver.Url is null!");
+                if (URL is null)
+                    throw new NullReferenceException("target url is null!");
+                if (delaySeconds <= 0 || tryouts <= 0)
+                    throw new ArgumentOutOfRangeException("Delay and tryouts cannot be less or equal 0");
             }
 
             public bool Navigate(string URL)
@@ -192,14 +207,6 @@ namespace My.Web
             /// <returns></returns>
             public bool Navigate(string URL, double delaySeconds, int tryouts = 1)
             {
-                #region check arguments
-                if (ChromeDriver == null)
-                    throw new ArgumentNullException("Chrome is null");
-                if (string.IsNullOrEmpty(URL))
-                    throw new ArgumentNullException("URL is null or empty");
-                if (delaySeconds <= 0 || tryouts <= 0)
-                    throw new ArgumentOutOfRangeException("Delay and tryouts cannot be less or equal 0");
-                #endregion
                 try
                 {
                     //toleratable errors counters
@@ -208,7 +215,8 @@ namespace My.Web
                     for (int i = 0; i < tryouts; i++)
                     {
                         this.CurrentUrl = URL;
-                        VisitedUrls.Add(this.CurrentUrl);
+                        string cururl = this.CurrentUrl;
+                        VisitedUrls.Add(cururl);
                         Wait.Do(delaySeconds);
                         if (Wait.Stop) return false;
 
@@ -325,7 +333,10 @@ namespace My.Web
                     return null;
             }
 
-
+            public void OpenNewTab()
+            {                
+                ((IJavaScriptExecutor)ChromeDriver).ExecuteScript("window.open();"); //to be extracted to the library
+            }
 
             #endregion
         }
@@ -469,6 +480,8 @@ namespace My.Web
                     chrome = new ChromeDriver(service, options);
                 //chrome.Manage().Cookies.DeleteAllCookies();
                 Wait.Do(1.5);
+                if (chrome is null || chrome.Url is null)
+                    throw new Exception("Fail to create Chrome!");
                 //get chrome related processes after initialization. Can throw error that access denied. Dealt away with running as administaror
                 var latestChromeRelatedIds = getChromeRelatedProcesses();
                 Wait.Do(1.5);
