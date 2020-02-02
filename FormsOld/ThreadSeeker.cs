@@ -305,6 +305,7 @@ namespace My.Forms
             _threadRenewSleepAndCurrentActivity.Start();
             #endregion
             pause_button = button4;
+            threadSeeker = this;
             string part = "ThreadSeeker.start";
             addMessage(part, "__________________________________________________", true);
             addMessage(part, "Логгер запущен", true, false, true);
@@ -436,14 +437,45 @@ namespace My.Forms
 
         #region fields
                     
+        public static ThreadSeeker threadSeeker;
         public static bool ShowSleepingInfo { get; set; } = false;
         /// <summary>
         /// it will be shown in bottom line
         /// </summary>
         public static string CurrentActivity { get; set; } = "";
         public static string CurrentActivityToolTip { get; set; } = "";
-        public static bool Pause = false;
-        public static bool Stop = false;
+        public static bool Pause
+        {
+            get
+            {
+                return pause;
+            }
+            private set
+            {
+                pause = value;
+            }
+        }
+        static bool pause = false;
+        public static bool Stop
+        {
+            get
+            {
+                return stop;
+            }
+            set
+            {
+                stop = value;
+                if (stop)
+                {
+                    Pause = false;                    
+                }
+                else
+                {
+
+                }
+            }
+        }
+        static bool stop = false;
 
 
         public Settings settings = null;
@@ -676,10 +708,10 @@ namespace My.Forms
                                     if (res.Count >= howMuch)
                                         break;
                                     string sreversed = "";
-                                    if (checkBox2.Checked && !reversed[a].part.EndsWith(".start") && !reversed[a].part.EndsWith(".closing"))
+                                    if (cb_compress.Checked && !reversed[a].part.EndsWith(".start") && !reversed[a].part.EndsWith(".closing"))
                                         sreversed = reversed[a].ToStringShort();
                                     else
-                                        sreversed = reversed[a].ToStringShort();
+                                        sreversed = reversed[a].ToString();
                                     res.Add(sreversed);
                                 }
                             }
@@ -959,11 +991,15 @@ namespace My.Forms
                 
         private void button4_Click(object sender, EventArgs e)
         {
-            if (button4.Text == ">")
-                Pause = true;
-
+            Pause = !Pause;
+            if (Pause)
+            {
+                button4.Text = "||";
+            }
             else
-                Pause = false;
+            {
+                button4.Text = ">";
+            }
         }
         private void numericUpDown1_ValueChanged(object sender, EventArgs e)
         {
@@ -998,8 +1034,16 @@ namespace My.Forms
             if (dr == DialogResult.Yes)
             {
                 Stop = true;
-                Pause = false;
+                new Thread(stopColorization).Start();
             }
+        }
+
+        void stopColorization()
+        {
+            var color = b_Stop.BackColor;
+            b_Stop.BackColor = Color.Green;
+            Thread.Sleep(1000);
+            b_Stop.BackColor = color;
         }
 
         #endregion

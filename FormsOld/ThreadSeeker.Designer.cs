@@ -38,7 +38,7 @@
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.button5 = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.checkBox2 = new System.Windows.Forms.CheckBox();
+            this.cb_compress = new System.Windows.Forms.CheckBox();
             this.b_Stop = new System.Windows.Forms.Button();
             this.button4 = new System.Windows.Forms.Button();
             this.tb_CurrentActivity = new System.Windows.Forms.TextBox();
@@ -57,9 +57,10 @@
             // 
             this.listView1.Activation = System.Windows.Forms.ItemActivation.OneClick;
             this.listView1.Alignment = System.Windows.Forms.ListViewAlignment.Left;
-            this.listView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
+            this.listView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.listView1.HideSelection = false;
             this.listView1.HotTracking = true;
             this.listView1.HoverSelection = true;
             this.listView1.Location = new System.Drawing.Point(0, 78);
@@ -124,7 +125,7 @@
             // 
             // textBox2
             // 
-            this.textBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            this.textBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox2.Location = new System.Drawing.Point(178, 56);
             this.textBox2.Name = "textBox2";
@@ -149,7 +150,7 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.checkBox2);
+            this.groupBox1.Controls.Add(this.cb_compress);
             this.groupBox1.Controls.Add(this.button5);
             this.groupBox1.Controls.Add(this.b_Stop);
             this.groupBox1.Controls.Add(this.button4);
@@ -177,17 +178,17 @@
             this.groupBox1.Text = "Логгирование";
             this.groupBox1.Enter += new System.EventHandler(this.groupBox1_Enter);
             // 
-            // checkBox2
+            // cb_compress
             // 
-            this.checkBox2.AutoSize = true;
-            this.checkBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.25F);
-            this.checkBox2.Location = new System.Drawing.Point(157, 15);
-            this.checkBox2.Name = "checkBox2";
-            this.checkBox2.Size = new System.Drawing.Size(53, 16);
-            this.checkBox2.TabIndex = 17;
-            this.checkBox2.Text = "Сжать";
-            this.checkBox2.UseVisualStyleBackColor = true;
-            this.checkBox2.CheckedChanged += new System.EventHandler(this.somethingChanged);
+            this.cb_compress.AutoSize = true;
+            this.cb_compress.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.25F);
+            this.cb_compress.Location = new System.Drawing.Point(157, 15);
+            this.cb_compress.Name = "cb_compress";
+            this.cb_compress.Size = new System.Drawing.Size(53, 16);
+            this.cb_compress.TabIndex = 17;
+            this.cb_compress.Text = "Сжать";
+            this.cb_compress.UseVisualStyleBackColor = true;
+            this.cb_compress.CheckedChanged += new System.EventHandler(this.somethingChanged);
             // 
             // b_Stop
             // 
@@ -213,7 +214,7 @@
             // 
             // tb_CurrentActivity
             // 
-            this.tb_CurrentActivity.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+            this.tb_CurrentActivity.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tb_CurrentActivity.Location = new System.Drawing.Point(78, 576);
             this.tb_CurrentActivity.Name = "tb_CurrentActivity";
@@ -255,7 +256,7 @@
             // 
             // POtb
             // 
-            this.POtb.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            this.POtb.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.POtb.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.POtb.Location = new System.Drawing.Point(261, 33);
@@ -268,7 +269,7 @@
             // 
             // Stb
             // 
-            this.Stb.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            this.Stb.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Stb.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.Stb.Location = new System.Drawing.Point(261, 13);
@@ -281,7 +282,7 @@
             // 
             // label2
             // 
-            this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(162, 59);
@@ -346,7 +347,7 @@
         private System.Windows.Forms.TextBox tb_CurrentActivity;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Button button5;
-        private System.Windows.Forms.CheckBox checkBox2;
+        private System.Windows.Forms.CheckBox cb_compress;
         private System.Windows.Forms.Button b_Stop;
     }
 }
