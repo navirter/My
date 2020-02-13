@@ -467,7 +467,8 @@ namespace My.Forms
                 stop = value;
                 if (stop)
                 {
-                    Pause = false;                    
+                    Pause = false;
+                    ThreadSeeker.addMessage("UI", "Stop button was pressed!", true, false);
                 }
                 else
                 {
