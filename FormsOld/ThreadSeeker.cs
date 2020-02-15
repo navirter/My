@@ -477,6 +477,8 @@ namespace My.Forms
             }
         }
         static bool stop = false;
+        public static long MaximumMemoryLoadoutForWorkTime { get; set; }
+        public static long MaximumCPULoadoutForWorkTime { get; set; }
 
 
         public Settings settings = null;
@@ -583,6 +585,12 @@ namespace My.Forms
                 #endregion
                 DateTime now = DateTime.Now;
                 Unit unit = new Unit(now, cpu, memory, important, system, programPart.Replace("__", "_"), message.Replace("[", "").Replace("]", ""));
+
+                if (memory > MaximumMemoryLoadoutForWorkTime)                
+                    MaximumMemoryLoadoutForWorkTime = memory;
+                if (cpu > MaximumCPULoadoutForWorkTime)
+                    MaximumCPULoadoutForWorkTime = cpu;
+                
                 string message_to_write = "{MES}" + unit.ToString();
 
                 appendLineToFile(message_to_write);
@@ -661,14 +669,16 @@ namespace My.Forms
             //threads.Clear();
             string initialText = groupBox1.Text;
             listView1.Items.Add("Подготовка логов. Стоит ограничить временной диапазон, если долго.");
+            var defaultGroupBox1Text = groupBox1.Text;
             while (!_closing)
-                exhibite();
+                exhibite(defaultGroupBox1Text);
         }
-        void exhibite()
+        void exhibite(string defaultGroupBoxText)
         {
             _somethingChanged = false;
             try
             {
+                groupBox1.Text = defaultGroupBoxText + ". Max CPU=" + MaximumCPULoadoutForWorkTime + ". Max memory=" + MaximumMemoryLoadoutForWorkTime;
                 #region exhibition   
                 if (_closing) return;
                 if (_threads.Count == 0)
