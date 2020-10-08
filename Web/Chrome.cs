@@ -476,7 +476,7 @@ namespace My.Web
                 //initialize chromedriver
 
                 ChromeDriver chrome = null;
-                chrome = new ChromeDriver();//debug
+                //chrome = new ChromeDriver();//debug
                 if (setUpOptions.CommandTimeout != new TimeSpan())
                     chrome = new ChromeDriver(service, options, setUpOptions.CommandTimeout);
                 else
