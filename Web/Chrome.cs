@@ -404,7 +404,9 @@ namespace My.Web
                 #region create service and options
                 //create instance
                 var service = ChromeDriverService.CreateDefaultService();
-                service.HideCommandPromptWindow = true;
+                //service.HideCommandPromptWindow = true;
+                var isRunning = service.IsRunning;
+
                 var options = new ChromeOptions();
                 #region set options
                 try
@@ -413,7 +415,7 @@ namespace My.Web
                     options.AddArgument("--enable-extensions");
                     options.AddArgument("--start-maximized");
                     #region proxy
-                    if (setUpOptions.ProxyServer != "")
+                    if (!string.IsNullOrEmpty(setUpOptions.ProxyServer))
                     {
                         Proxy proxy = new Proxy()
                         {
@@ -456,7 +458,7 @@ namespace My.Web
                     try
                     {
                         if (setUpOptions.IgnoreSertivicateErrors)
-                            options.AddArgument("ignore-certificate-errors");
+                            options.AddArgument("--ignore-certificate-errors");
                     }
                     catch (Exception e)
                     {
@@ -470,10 +472,11 @@ namespace My.Web
                 #endregion
                 
                 var chromeRelatedIds = getChromeRelatedProcesses();
-                //WaitSmoothly.Do(1.5);
+                //Wait.Do(1.5);
                 //initialize chromedriver
 
                 ChromeDriver chrome = null;
+                chrome = new ChromeDriver();//debug
                 if (setUpOptions.CommandTimeout != new TimeSpan())
                     chrome = new ChromeDriver(service, options, setUpOptions.CommandTimeout);
                 else
